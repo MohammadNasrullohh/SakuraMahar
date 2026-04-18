@@ -1,0 +1,99 @@
+.faq {
+  background: linear-gradient(180deg, #fef8fb 0%, #fbf2ff 100%);
+  padding: 90px 0;
+}
+
+.faq-header {
+  max-width: 720px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.faq-label {
+  display: inline-flex;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(233, 30, 99, 0.12);
+  color: #c2185b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.faq-copy {
+  max-width: 700px;
+  margin: 16px auto 0;
+  color: #716178;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.faq-grid {
+  display: grid;
+  gap: 18px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.faq-card {
+  background: white;
+  border: 1px solid rgba(233, 30, 99, 0.1);
+  border-radius: 24px;
+  padding: 24px 28px;
+  box-shadow: 0 18px 40px rgba(117, 68, 106, 0.08);
+}
+
+.faq-card summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 17px;
+  color: #2f1f32;
+  list-style: none;
+  outline: none;
+}
+
+.faq-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-card summary::after {
+  content: '+';
+  float: right;
+  color: #e91e63;
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.25s ease;
+}
+
+.faq-card[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.faq-card p {
+  margin-top: 20px;
+  color: #5e4a64;
+  line-height: 1.85;
+  font-size: 15px;
+}
+
+@media (max-width: 768px) {
+  .faq {
+    padding: 70px 0;
+  }
+
+  .faq-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .faq-copy {
+    font-size: 15px;
+  }
+
+  .faq-card {
+    border-radius: 20px;
+  }
+}

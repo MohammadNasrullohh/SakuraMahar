@@ -1,0 +1,95 @@
+.skeleton-wrapper {
+  width: 100%;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e8e8e8 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 20px;
+  border-radius: 4px;
+}
+
+.skeleton-heading {
+  height: 32px;
+  border-radius: 4px;
+}
+
+.skeleton-avatar {
+  height: 48px;
+  width: 48px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.skeleton-card {
+  height: 200px;
+  border-radius: 8px;
+}
+
+.skeleton-button {
+  height: 40px;
+  border-radius: 6px;
+  min-width: 100px;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Skeleton grid for cards */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.skeleton-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-grid-item .skeleton-card {
+  height: 180px;
+}
+
+.skeleton-grid-item .skeleton-text:nth-child(2) {
+  height: 16px;
+  width: 80%;
+}
+
+.skeleton-grid-item .skeleton-text:nth-child(3) {
+  height: 14px;
+  width: 60%;
+}
+
+/* Animate on load */
+.skeleton {
+  background-attachment: fixed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: #f0f0f0;
+  }
+}

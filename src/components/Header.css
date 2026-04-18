@@ -1,0 +1,366 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 16px 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(233, 30, 99, 0.08);
+  box-shadow: 0 12px 36px rgba(76, 32, 62, 0.08);
+}
+
+.header-content {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.28)),
+    linear-gradient(135deg, rgba(233, 30, 99, 0.18), rgba(156, 39, 176, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 14px 28px rgba(233, 30, 99, 0.12);
+}
+
+.logo i {
+  font-size: 24px;
+  color: #d63384;
+}
+
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+
+.logo-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.logo-wordmark {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-tagline {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a66b9f;
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 2vw, 30px);
+  min-width: 0;
+}
+
+.nav a {
+  position: relative;
+  padding: 12px 0;
+  color: #4d3a49;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.nav a:hover {
+  color: #cf2575;
+}
+
+.nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.25s ease;
+}
+
+.nav a:hover::after {
+  transform: scaleX(1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 14px;
+  min-width: 0;
+}
+
+.user-info,
+.guest-actions,
+.user-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.user-info {
+  min-width: 0;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: 210px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: #fff5fb;
+  border: 1px solid rgba(233, 30, 99, 0.12);
+}
+
+.user-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b66895;
+}
+
+.user-meta-name {
+  color: #362534;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-login,
+.btn-admin,
+.btn-signup,
+.btn-logout {
+  border: none;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.btn-login {
+  background: rgba(255, 255, 255, 0.88);
+  color: #4a2b46;
+  border: 1px solid rgba(233, 30, 99, 0.14);
+  padding: 10px 16px;
+}
+
+.btn-login:hover {
+  color: #cf2575;
+  transform: translateY(-1px);
+}
+
+.btn-login:disabled {
+  opacity: 0.65;
+  cursor: default;
+  transform: none;
+}
+
+.btn-signup {
+  background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+  color: white;
+  padding: 10px 18px;
+  box-shadow: 0 12px 24px rgba(233, 30, 99, 0.18);
+}
+
+.btn-signup:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(233, 30, 99, 0.24);
+}
+
+.btn-admin {
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.12), rgba(156, 39, 176, 0.15));
+  color: #8f2f8f;
+  border: 1px solid rgba(156, 39, 176, 0.12);
+  padding: 10px 16px;
+}
+
+.btn-admin:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(156, 39, 176, 0.12);
+}
+
+.btn-logout {
+  background: linear-gradient(135deg, #ff5a4f 0%, #ff7648 100%);
+  color: white;
+  padding: 10px 16px;
+  box-shadow: 0 10px 22px rgba(255, 90, 79, 0.18);
+}
+
+.btn-logout:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(255, 90, 79, 0.24);
+}
+
+.hamburger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(233, 30, 99, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.hamburger span {
+  width: 20px;
+  height: 2px;
+  background: #5a4257;
+  border-radius: 999px;
+  transition: all 0.25s ease;
+}
+
+@media (max-width: 1320px) {
+  .header-content {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+  }
+
+  .nav {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 16px 20px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(233, 30, 99, 0.1);
+    box-shadow: 0 20px 44px rgba(69, 24, 55, 0.12);
+  }
+
+  .nav.active {
+    display: flex;
+  }
+
+  .nav a {
+    padding: 14px 6px;
+    border-bottom: 1px solid rgba(233, 30, 99, 0.08);
+  }
+
+  .nav a:last-child {
+    border-bottom: none;
+  }
+
+  .nav a::after {
+    display: none;
+  }
+
+  .user-meta {
+    display: none;
+  }
+
+  .hamburger {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 900px) {
+  .logo-wordmark {
+    font-size: 24px;
+  }
+
+  .logo-tagline,
+  .btn-login-compact {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 10px;
+  }
+
+  .btn-admin,
+  .btn-logout,
+  .btn-signup,
+  .btn-login {
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 12px 0;
+  }
+
+  .logo-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+  }
+
+  .logo-wordmark {
+    font-size: 21px;
+  }
+
+  .user-buttons {
+    gap: 8px;
+  }
+
+  .guest-actions,
+  .user-info {
+    justify-content: flex-end;
+  }
+
+  .btn-admin,
+  .btn-logout,
+  .btn-signup,
+  .btn-login {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakura Mahar - Platform Pernikahan Modern</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-k6RqeWeci5ad8Jp8srzJvzSZMf15O3qSKrWJO3kJCrUjgbzAMffeGUapwSm5Ri6fl_3PARAMX56CXxvxKrgAtZw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #e91e63;
+            --secondary: #9c27b0;
+            --accent: #ff4081;
+            --light: #f5f5f5;
+            --dark: #212121;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: var(--light);
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 15px 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: pointer;
+        }
+
+        .logo i {
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .nav {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav a {
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .nav a:hover {
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-login {
+            background: transparent;
+            color: #333;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 20px;
+            transition: color 0.3s ease;
+        }
+
+        .btn-login:hover {
+            color: var(--primary);
+        }
+
+        .btn-signup {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(233, 30, 99, 0.3);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%);
+            padding: 100px 0;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 54px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+            color: var(--dark);
+        }
+
+        .hero-text p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.4);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 10px 28px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .stat {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.15);
+        }
+
+        .stat h3 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .stat p {
+            color: #999;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .hero-image {
+            display: flex;
+            justify-content: center;
+        }
+
+        .image-placeholder {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 120px;
+            color: white;
+            box-shadow: 0 20px 60px rgba(233, 30, 99, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* ===== FEATURES ===== */
+        .features {
+            background: #fff;
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-size: 42px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: #666;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.15);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            color: white;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* ===== SERVICES ===== */
+        .services {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+            padding: 80px 0;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.2);
+        }
+
+        .service-card.popular {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .service-card.popular:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .service-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 20px 0 10px;
+        }
+
+        .price {
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .duration {
+            color: #999;
+            font-size: 14px;
+            margin: 0 0 30px;
+        }
+
+        .features-list {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 30px;
+            padding: 0;
+        }
+
+        .features-list li {
+            padding: 12px 0;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+        }
+
+        /* ===== TESTIMONIALS ===== */
+        .testimonials {
+            background: #fff;
+            padding: 80px 0;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .testimonial-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.15);
+        }
+
+        .testimonial-header {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            font-size: 50px;
+        }
+
+        .testimonial-header h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .testimonial-header p {
+            font-size: 14px;
+            color: #999;
+            margin: 0;
+        }
+
+        .testimonial-text {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        /* ===== CONTACT ===== */
+        .contact {
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%);
+            padding: 80px 0;
+        }
+
+        .contact-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+        }
+
+        .contact-info h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .contact-info > p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 40px;
+        }
+
+        .contact-details {
+            margin-bottom: 40px;
+        }
+
+        .contact-item {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .contact-item i {
+            font-size: 24px;
+            color: var(--primary);
+            min-width: 30px;
+        }
+
+        .contact-item h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .contact-form {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .contact-form h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: linear-gradient(135deg, var(--dark) 0%, #424242 100%);
+            color: #fff;
+            padding: 60px 0 0;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            padding-bottom: 40px;
+        }
+
+        .footer-section h3,
+        .footer-section h4 {
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .footer-section h3 {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-section a {
+            color: #b0bec5;
+            font-size: 14px;
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #b0bec5;
+            font-size: 14px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: rgba(233, 30, 99, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero-content,
+            .contact-content,
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid,
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-text h1 {
+                font-size: 36px;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .image-placeholder {
+                width: 300px;
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .features-grid,
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-text h1 {
+                font-size: 28px;
+            }
+
+            .service-card.popular {
+                transform: scale(1);
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .image-placeholder {
+                width: 200px;
+                height: 200px;
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-cherry"></i>
+                <span>Sakura Mahar</span>
+            </div>
+            <nav class="nav">
+                <a href="#home">Beranda</a>
+                <a href="#features">Fitur</a>
+                <a href="#services">Layanan</a>
+                <a href="#testimonials">Testimoni</a>
+                <a href="#contact">Hubungi Kami</a>
+            </nav>
+            <div class="header-actions">
+                <button class="btn-login">Masuk</button>
+                <button class="btn-signup">Daftar</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Platform Pernikahan Modern Anda</h1>
+                    <p>Sakura Mahar memudahkan Anda mengelola mahar digital, undangan, dan segala kebutuhan pernikahan Anda dengan teknologi terkini.</p>
+                    <div class="hero-buttons">
+                        <button class="btn-primary">Mulai Sekarang</button>
+                        <button class="btn-secondary">Pelajari Lebih Lanjut</button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <h3>10K+</h3>
+                            <p>Pengguna Aktif</p>
+                        </div>
+                        <div class="stat">
+                            <h3>5K+</h3>
+                            <p>Pernikahan Dirayakan</p>
+                        </div>
+                        <div class="stat">
+                            <h3>98%</h3>
+                            <p>Kepuasan Pelanggan</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="image-placeholder">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">Fitur Unggulan</h2>
+            <p class="section-subtitle">Semua yang Anda butuhkan untuk pernikahan impian</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-credit-card"></i></div>
+                    <h3>Mahar Digital</h3>
+                    <p>Terima mahar secara digital dengan aman dan terpercaya melalui berbagai metode pembayaran.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-envelope"></i></div>
+                    <h3>Undangan Digital</h3>
+                    <p>Buat dan kirim undangan pernikahan yang elegan dan interaktif kepada tamu Anda.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-users"></i></div>
+                    <h3>Manajemen Tamu</h3>
+                    <p>Kelola daftar tamu, RSVP, dan tempat duduk dengan mudah dalam satu platform.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-calendar"></i></div>
+                    <h3>Jadwal Lengkap</h3>
+                    <p>Buat jadwal acara pernikahan yang terorganisir dan bagikan dengan semua orang.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-camera"></i></div>
+                    <h3>Galeri Momen</h3>
+                    <p>Bagikan foto dan video pernikahan Anda dengan tamu dalam galeri pribadi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                    <h3>Keamanan Terjamin</h3>
+                    <p>Data Anda dilindungi dengan enkripsi tingkat bank dan privasi terjaga.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="services" id="services">
+        <div class="container">
+            <h2 class="section-title">Paket Layanan</h2>
+            <p class="section-subtitle">Pilih paket yang sesuai dengan kebutuhan Anda</p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <h3>Paket Starter</h3>
+                    <div class="price">Rp 99.000</div>
+                    <p class="duration">/3 bulan</p>
+                    <ul class="features-list">
+                        <li>✓ Undangan Digital</li>
+                        <li>✓ Manajemen Mahar</li>
+                        <li>✓ Daftar Tamu (50 tamu)</li>
+                        <li>✓ Galeri Foto (10GB)</li>
+                        <li>✓ Support Email</li>
+                    </ul>
+                    <button class="btn-secondary">Pilih Paket</button>
+                </div>
+                <div class="service-card popular">
+                    <div class="popular-badge">PALING POPULER</div>
+                    <h3>Paket Premium</h3>
+                    <div class="price">Rp 299.000</div>
+                    <p class="duration">/3 bulan</p>
+                    <ul class="features-list">
+                        <li>✓ Semua Fitur Starter</li>
+                        <li>✓ Daftar Tamu (500 tamu)</li>
+                        <li>✓ Galeri Foto (100GB)</li>
+                        <li>✓ Live Streaming</li>
+                        <li>✓ Musik Latar</li>
+                        <li>✓ Support Priority 24/7</li>
+                    </ul>
+                    <button class="btn-primary">Pilih Paket</button>
+                </div>
+                <div class="service-card">
+                    <h3>Paket Platinum</h3>
+                    <div class="price">Rp 599.000</div>
+                    <p class="duration">/3 bulan</p>
+                    <ul class="features-list">
+                        <li>✓ Semua Fitur Premium</li>
+                        <li>✓ Daftar Tamu (Unlimited)</li>
+                        <li>✓ Galeri Foto (Unlimited)</li>
+                        <li>✓ Undangan Khusus Cetak</li>
+                        <li>✓ Konsultasi Pernikahan</li>
+                        <li>✓ Tim Dedicated</li>
+                    </ul>
+                    <button class="btn-secondary">Pilih Paket</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <h2 class="section-title">Testimoni Pengguna</h2>
+            <p class="section-subtitle">Dengarkan pengalaman dari para pengantin yang telah menggunakan Sakura Mahar</p>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar">👰</div>
+                        <div>
+                            <h4>Ayu & Rizki</h4>
+                            <p>Pengantin</p>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">"Sakura Mahar membuat pernikahan kami menjadi lebih mudah dikelola. Fitur manajemen tamu sangat membantu!"</p>
+                    <div>⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar">💒</div>
+                        <div>
+                            <h4>Siti & Ahmad</h4>
+                            <p>Pengantin</p>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">"Undangan digital kami sangat elegan dan tamu sangat senang dengan pengalamannya. Terima kasih Sakura Mahar!"</p>
+                    <div>⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar">💕</div>
+                        <div>
+                            <h4>Nadia & Irfan</h4>
+                            <p>Pengantin</p>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">"Fitur mahar digital sangat aman dan transparan. Kami sangat merekomendasikan kepada calon pengantin lain."</p>
+                    <div>⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar">🎊</div>
+                        <div>
+                            <h4>Rina & Budi</h4>
+                            <p>Pengantin</p>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">"Galeri foto online kami menjadi tempat menyimpan kenangan indah pernikahan. Sangat praktis dan aman!"</p>
+                    <div>⭐⭐⭐⭐⭐</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="contact-content">
+                <div class="contact-info">
+                    <h2>Hubungi Kami</h2>
+                    <p>Punya pertanyaan? Kami siap membantu Anda. Hubungi kami melalui informasi di bawah ini.</p>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <div>
+                                <h4>Telepon</h4>
+                                <p>+62 812 3456 7890</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h4>Email</h4>
+                                <p>info@sakuramahar.com</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <h4>Alamat</h4>
+                                <p>Jakarta, Indonesia</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h4>Jam Operasional</h4>
+                                <p>Senin - Jumat: 09:00 - 18:00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="social-links">
+                        <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <form class="contact-form" onsubmit="return handleSubmit(event)">
+                    <h3>Kirim Pesan</h3>
+                    <div class="form-group">
+                        <label for="name">Nama Lengkap</label>
+                        <input type="text" id="name" name="name" required placeholder="Masukkan nama Anda">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required placeholder="Masukkan email Anda">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Nomor Telepon</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Masukkan nomor telepon">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Pesan</label>
+                        <textarea id="message" name="message" required placeholder="Tulis pesan Anda di sini" rows="5"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Kirim Pesan</button>
+                    <div id="success-message" style="display:none; background: #4caf50; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                        ✓ Pesan Anda telah dikirim! Terima kasih sudah menghubungi kami.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Sakura Mahar</h3>
+                    <p>Platform pernikahan modern yang memudahkan Anda merayakan momen spesial dengan sempurna.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Menu Utama</h4>
+                    <ul>
+                        <li><a href="#home">Beranda</a></li>
+                        <li><a href="#features">Fitur</a></li>
+                        <li><a href="#services">Layanan</a></li>
+                        <li><a href="#testimonials">Testimoni</a></li>
+                        <li><a href="#contact">Kontak</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Bantuan</h4>
+                    <ul>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Tutorial</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Kebijakan Privasi</a></li>
+                        <li><a href="#">Syarat & Ketentuan</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Kontak</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 12px;"><i class="fas fa-phone" style="color: var(--primary); margin-right: 10px;"></i> +62 812 3456 7890</li>
+                        <li style="margin-bottom: 12px;"><i class="fas fa-envelope" style="color: var(--primary); margin-right: 10px;"></i> info@sakuramahar.com</li>
+                        <li><i class="fas fa-map-marker-alt" style="color: var(--primary); margin-right: 10px;"></i> Jakarta, Indonesia</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 40px 0;"></div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Sakura Mahar. Semua hak dilindungi.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const successMessage = document.getElementById('success-message');
+            
+            // Show success message
+            successMessage.style.display = 'block';
+            
+            // Reset form after 3 seconds
+            setTimeout(() => {
+                form.reset();
+                successMessage.style.display = 'none';
+            }, 3000);
+            
+            return false;
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

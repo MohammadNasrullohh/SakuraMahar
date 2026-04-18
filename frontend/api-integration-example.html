@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakura Mahar - API Integration Example</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #e91e63;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e91e63;
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+        }
+
+        .output {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .output pre {
+            margin: 0;
+            color: #333;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+
+        .status.info {
+            background: #2196f3;
+            color: white;
+        }
+
+        #status {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Register -->
+        <div class="card">
+            <h2><i class="fas fa-user-plus"></i> Register</h2>
+            <div id="status"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerNama">Nama Lengkap</label>
+                    <input type="text" id="registerNama" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Konfirmasi Password</label>
+                    <input type="password" id="registerConfirmPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPhone">No Telepon</label>
+                    <input type="tel" id="registerPhone">
+                </div>
+                <button type="submit">Register</button>
+            </form>
+            <div class="output" style="display: none;" id="registerOutput">
+                <pre id="registerResult"></pre>
+            </div>
+        </div>
+
+        <!-- Login -->
+        <div class="card">
+            <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+            <div class="output" style="display: none;" id="loginOutput">
+                <pre id="loginResult"></pre>
+            </div>
+        </div>
+
+        <!-- Get Profile -->
+        <div class="card">
+            <h2><i class="fas fa-user-circle"></i> Get Profile</h2>
+            <button id="profileBtn">Load Profile</button>
+            <div class="output" style="display: none;" id="profileOutput">
+                <pre id="profileResult"></pre>
+            </div>
+        </div>
+
+        <!-- Add Guest -->
+        <div class="card">
+            <h2><i class="fas fa-users"></i> Add Guest</h2>
+            <form id="guestForm">
+                <div class="form-group">
+                    <label for="guestNama">Nama Tamu</label>
+                    <input type="text" id="guestNama" required>
+                </div>
+                <div class="form-group">
+                    <label for="guestEmail">Email Tamu</label>
+                    <input type="email" id="guestEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="guestPhone">No Telepon</label>
+                    <input type="tel" id="guestPhone">
+                </div>
+                <button type="submit">Add Guest</button>
+            </form>
+            <div class="output" style="display: none;" id="guestOutput">
+                <pre id="guestResult"></pre>
+            </div>
+        </div>
+
+        <!-- Get Guests -->
+        <div class="card">
+            <h2><i class="fas fa-list"></i> Guest List</h2>
+            <button id="guestListBtn">Load Guest List</button>
+            <div class="output" style="display: none;" id="guestListOutput">
+                <pre id="guestListResult"></pre>
+            </div>
+        </div>
+
+        <!-- Send Contact -->
+        <div class="card">
+            <h2><i class="fas fa-envelope"></i> Contact Us</h2>
+            <form id="contactForm">
+                <div class="form-group">
+                    <label for="contactNama">Nama</label>
+                    <input type="text" id="contactNama" required>
+                </div>
+                <div class="form-group">
+                    <label for="contactEmail">Email</label>
+                    <input type="email" id="contactEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="contactPesan">Pesan</label>
+                    <textarea id="contactPesan" rows="4" required></textarea>
+                </div>
+                <button type="submit">Kirim Pesan</button>
+            </form>
+            <div class="output" style="display: none;" id="contactOutput">
+                <pre id="contactResult"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_URL = 'http://localhost:5000';
+        let token = localStorage.getItem('sakura_token');
+
+        // Helper functions
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => status.style.display = 'none', 3000);
+        }
+
+        function showOutput(id, data) {
+            document.getElementById(id).style.display = 'block';
+            document.getElementById(id.replace('Output', 'Result')).textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                ...options,
+                headers
+            });
+
+            if (!response.ok) {
+                throw await response.json();
+            }
+
+            return response.json();
+        }
+
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const data = await apiCall('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        nama: document.getElementById('registerNama').value,
+                        email: document.getElementById('registerEmail').value,
+                        password: document.getElementById('registerPassword').value,
+                        confirmPassword: document.getElementById('registerConfirmPassword').value,
+                        noTelepon: document.getElementById('registerPhone').value
+                    })
+                });
+                token = data.token;
+                localStorage.setItem('sakura_token', token);
+                showStatus('Registrasi berhasil!', 'success');
+                showOutput('registerOutput', data);
+            } catch (error) {
+                showStatus(error.error || 'Error', 'error');
+                showOutput('registerOutput', error);
+            }
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const data = await apiCall('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                token = data.token;
+                localStorage.setItem('sakura_token', token);
+                showStatus('Login berhasil!', 'success');
+                showOutput('loginOutput', data);
+            } catch (error) {
+                showStatus(error.error || 'Error', 'error');
+                showOutput('loginOutput', error);
+            }
+        });
+
+        // Get Profile
+        document.getElementById('profileBtn').addEventListener('click', async () => {
+            try {
+                const data = await apiCall('/api/users/profile');
+                showStatus('Profile loaded', 'success');
+                showOutput('profileOutput', data);
+            } catch (error) {
+                showStatus(error.error || 'Error', 'error');
+                showOutput('profileOutput', error);
+            }
+        });
+
+        // Add Guest
+        document.getElementById('guestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const data = await apiCall('/api/guests/add', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: 1,
+                        nama: document.getElementById('guestNama').value,
+                        email: document.getElementById('guestEmail').value,
+                        noTelepon: document.getElementById('guestPhone').value
+                    })
+                });
+                showStatus('Tamu berhasil ditambahkan!', 'success');
+                showOutput('guestOutput', data);
+            } catch (error) {
+                showStatus(error.error || 'Error', 'error');
+                showOutput('guestOutput', error);
+            }
+        });
+
+        // Get Guest List
+        document.getElementById('guestListBtn').addEventListener('click', async () => {
+            try {
+                const data = await apiCall('/api/guests/list');
+                showStatus('Guest list loaded', 'success');
+                showOutput('guestListOutput', data);
+            } catch (error) {
+                showStatus(error.error || 'Error', 'error');
+                showOutput('guestListOutput', error);
+            }
+        });
+
+        // Contact
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const data = await apiCall('/api/contact/send', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        nama: document.getElementById('contactNama').value,
+                        email: document.getElementById('contactEmail').value,
+                        pesan: document.getElementById('contactPesan').value
+                    })
+                });
+                showStatus('Pesan berhasil dikirim!', 'success');
+                showOutput('contactOutput', data);
+                document.getElementById('contactForm').reset();
+            } catch (error) {
+                showStatus(error.error || 'Error', 'error');
+                showOutput('contactOutput', error);
+            }
+        });
+    </script>
+</body>
+</html>

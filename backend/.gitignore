@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+npm-debug.log
+npm-error.log
+yarn-error.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build
+dist/
+build/
+out/
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+.cache/
+*.pid
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Temporary files
+tmp/
+temp/
