@@ -44,6 +44,12 @@ npm run build
 
 File production akan berada di folder `build/`
 
+## Arsitektur Production
+
+- Frontend dan backend production berjalan di Vercel.
+- Backend Express di Vercel memakai Firestore sebagai storage permanen untuk user/auth, order, dan konten publik.
+- Integrasi Firestore dilakukan lewat Firebase Admin SDK dengan environment variable `FIREBASE_PROJECT_ID` dan `FIREBASE_SERVICE_ACCOUNT_JSON`, sehingga tidak lagi bergantung pada filesystem lokal yang bersifat sementara.
+
 ## Struktur Folder
 
 ```

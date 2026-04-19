@@ -1,6 +1,4 @@
-const { constants: fsConstants } = require('fs');
-const fs = require('fs/promises');
-const path = require('path');
+const { readJsonFile, runSerialized, writeJsonFile } = require('./dataStore');
 const {
   createDocumentWithNumericId,
   deleteDocumentById,
@@ -12,11 +10,9 @@ const {
 const { isFirebaseEnabled } = require('./firebase');
 const { isReservedAdminEmail, normalizeEmail } = require('./reservedAdmins');
 
-const dataDirectory = path.join(__dirname, '..', 'data');
-const usersFilePath = path.join(dataDirectory, 'users.json');
+const FILENAME = 'users.json';
+const DEFAULT_STORE = { users: [] };
 const USERS_COLLECTION = 'users';
-
-let writeQueue = Promise.resolve();
 
 const hydrateUser = (user = {}) => ({
   id: Number(user.id),
@@ -37,52 +33,17 @@ const hydrateUser = (user = {}) => ({
   undangan: Array.isArray(user.undangan) ? user.undangan : []
 });
 
-const ensureStore = async () => {
-  await fs.mkdir(dataDirectory, { recursive: true });
-
-  try {
-    await fs.access(usersFilePath, fsConstants.F_OK);
-  } catch (error) {
-    await fs.writeFile(usersFilePath, JSON.stringify({ users: [] }, null, 2));
-  }
-};
-
 const readStore = async () => {
-  await ensureStore();
-
-  const rawContent = await fs.readFile(usersFilePath, 'utf8');
-  if (!rawContent.trim()) {
-    return { users: [] };
-  }
-
-  const parsedContent = JSON.parse(rawContent);
+  const parsedContent = await readJsonFile(FILENAME, DEFAULT_STORE);
   return {
     users: Array.isArray(parsedContent.users) ? parsedContent.users.map(hydrateUser) : []
   };
 };
 
 const writeStore = async (store) => {
-  await ensureStore();
-  await fs.writeFile(
-    usersFilePath,
-    JSON.stringify(
-      {
-        users: store.users.map(hydrateUser)
-      },
-      null,
-      2
-    )
-  );
-};
-
-const runSerializedWrite = async (operation) => {
-  const nextWrite = writeQueue.then(operation, operation);
-  writeQueue = nextWrite.then(
-    () => undefined,
-    () => undefined
-  );
-
-  return nextWrite;
+  await writeJsonFile(FILENAME, {
+    users: store.users.map(hydrateUser)
+  });
 };
 
 const sortUsers = (users) =>
@@ -153,7 +114,7 @@ const createUser = async ({ nama, email, password, noTelepon = '' }) => {
     return createDocumentWithNumericId(USERS_COLLECTION, payload, hydrateUser);
   }
 
-  return runSerializedWrite(async () => {
+  return runSerialized(FILENAME, async () => {
     const store = await readStore();
     const nextId =
       store.users.reduce((highestId, user) => {
@@ -198,7 +159,7 @@ const updateUser = async (id, updates) => {
     );
   }
 
-  return runSerializedWrite(async () => {
+  return runSerialized(FILENAME, async () => {
     const store = await readStore();
     const userIndex = store.users.findIndex((user) => String(user.id) === String(id));
 
@@ -256,7 +217,7 @@ const adminUpdateUser = async (id, updates) => {
     );
   }
 
-  return runSerializedWrite(async () => {
+  return runSerialized(FILENAME, async () => {
     const store = await readStore();
     const userIndex = store.users.findIndex((user) => String(user.id) === String(id));
 
@@ -305,7 +266,7 @@ const setUserPassword = async (id, password) => {
     );
   }
 
-  return runSerializedWrite(async () => {
+  return runSerialized(FILENAME, async () => {
     const store = await readStore();
     const userIndex = store.users.findIndex((user) => String(user.id) === String(id));
 
@@ -330,7 +291,7 @@ const deleteUser = async (id) => {
     return deleteDocumentById(USERS_COLLECTION, id, hydrateUser);
   }
 
-  return runSerializedWrite(async () => {
+  return runSerialized(FILENAME, async () => {
     const store = await readStore();
     const userIndex = store.users.findIndex((user) => String(user.id) === String(id));
 

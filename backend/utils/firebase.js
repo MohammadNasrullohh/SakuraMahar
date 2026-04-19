@@ -2,20 +2,49 @@ const admin = require('firebase-admin');
 
 let initialized = false;
 let initializationError = null;
+let firestoreDb = null;
+let storageBucket = null;
+
+const parseServiceAccountJson = (rawValue, sourceLabel) => {
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawValue);
+  } catch (error) {
+    initializationError = new Error(`${sourceLabel} tidak valid.`);
+    return null;
+  }
+};
 
 const parseInlineServiceAccount = () => {
+  const base64Value = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+
+  if (base64Value) {
+    try {
+      const decodedValue = Buffer.from(base64Value, 'base64').toString('utf8');
+      const parsedServiceAccount = parseServiceAccountJson(
+        decodedValue,
+        'FIREBASE_SERVICE_ACCOUNT_BASE64'
+      );
+
+      if (parsedServiceAccount) {
+        return parsedServiceAccount;
+      }
+    } catch (error) {
+      initializationError = new Error('FIREBASE_SERVICE_ACCOUNT_BASE64 tidak valid.');
+      return null;
+    }
+  }
+
   const inlineValue = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
   if (!inlineValue) {
     return null;
   }
 
-  try {
-    return JSON.parse(inlineValue);
-  } catch (error) {
-    initializationError = new Error('FIREBASE_SERVICE_ACCOUNT_JSON tidak valid.');
-    return null;
-  }
+  return parseServiceAccountJson(inlineValue, 'FIREBASE_SERVICE_ACCOUNT_JSON');
 };
 
 const resolveProjectId = () => {
@@ -92,25 +121,34 @@ const initializeFirebase = () => {
 };
 
 const getFirestoreDb = () => {
+  if (firestoreDb) {
+    return firestoreDb;
+  }
+
   const app = initializeFirebase();
 
   if (!app) {
     return null;
   }
 
-  const db = admin.firestore(app);
-  db.settings({ ignoreUndefinedProperties: true });
-  return db;
+  firestoreDb = admin.firestore(app);
+  firestoreDb.settings({ ignoreUndefinedProperties: true });
+  return firestoreDb;
 };
 
 const getStorageBucket = () => {
+  if (storageBucket) {
+    return storageBucket;
+  }
+
   const app = initializeFirebase();
 
   if (!app) {
     return null;
   }
 
-  return admin.storage(app).bucket();
+  storageBucket = admin.storage(app).bucket();
+  return storageBucket;
 };
 
 const isFirebaseEnabled = () => Boolean(initializeFirebase());
