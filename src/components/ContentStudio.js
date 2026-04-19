@@ -423,63 +423,8 @@ const ContentStudio = ({ value, onChange, onSave, isSaving, mediaAssets = [] }) 
       </div>
 
       <div className="admin-card">
-        {renderArrayHeader(
-          'Katalog Produk',
-          'Kelola produk satuan seperti marketplace: kategori, harga, badge, rating, gambar, dan highlight produk.',
-          () => addArrayItem(['products'], {
-            name: '',
-            category: 'Produk',
-            price: '',
-            compareAtPrice: '',
-            shortDescription: '',
-            imageUrl: '',
-            badgeText: '',
-            rating: '',
-            soldText: '',
-            features: [],
-            popular: false,
-            featured: true,
-            accent: 'rose'
-          }),
-          'Tambah Produk'
-        )}
-        <div className="admin-list">
-          {content.products.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Nama Produk</span><input value={item.name || ''} onChange={(event) => updateArrayItem(['products'], index, 'name', event.target.value)} /></label>
-                <label className="admin-field"><span>Kategori</span><input value={item.category || ''} onChange={(event) => updateArrayItem(['products'], index, 'category', event.target.value)} placeholder="Produk / Model Bingkai / Isian Mahar / Packing Wajib" /></label>
-                <label className="admin-field"><span>Harga</span><input value={item.price || ''} onChange={(event) => updateArrayItem(['products'], index, 'price', event.target.value)} placeholder="Rp195.000" /></label>
-                <label className="admin-field"><span>Harga Coret</span><input value={item.compareAtPrice || ''} onChange={(event) => updateArrayItem(['products'], index, 'compareAtPrice', event.target.value)} placeholder="Rp225.000" /></label>
-                <label className="admin-field"><span>Badge</span><input value={item.badgeText || ''} onChange={(event) => updateArrayItem(['products'], index, 'badgeText', event.target.value)} placeholder="Promo / Hot / Best Seller" /></label>
-                <label className="admin-field"><span>Rating</span><input value={item.rating || ''} onChange={(event) => updateArrayItem(['products'], index, 'rating', event.target.value)} placeholder="4.9" /></label>
-                <label className="admin-field"><span>Teks Terjual</span><input value={item.soldText || ''} onChange={(event) => updateArrayItem(['products'], index, 'soldText', event.target.value)} placeholder="170 terjual" /></label>
-                <label className="admin-field">
-                  <span>Aksen Kartu</span>
-                  <select value={item.accent || 'rose'} onChange={(event) => updateArrayItem(['products'], index, 'accent', event.target.value)}>
-                    <option value="rose">Rose</option>
-                    <option value="amber">Amber</option>
-                    <option value="blue">Blue</option>
-                    <option value="gold">Gold</option>
-                    <option value="purple">Purple</option>
-                    <option value="teal">Teal</option>
-                  </select>
-                </label>
-                <label className="admin-field"><span>Popular</span><select value={item.popular ? 'yes' : 'no'} onChange={(event) => updateArrayItem(['products'], index, 'popular', event.target.value === 'yes')}><option value="no">No</option><option value="yes">Yes</option></select></label>
-                <label className="admin-field"><span>Tampilkan di Rekomendasi</span><select value={item.featured === false ? 'no' : 'yes'} onChange={(event) => updateArrayItem(['products'], index, 'featured', event.target.value === 'yes')}><option value="yes">Yes</option><option value="no">No</option></select></label>
-                <label className="admin-field admin-field-full"><span>Deskripsi Singkat</span><textarea value={item.shortDescription || ''} onChange={(event) => updateArrayItem(['products'], index, 'shortDescription', event.target.value)} /></label>
-                <label className="admin-field admin-field-full"><span>Gambar Produk Path/URL</span><input value={item.imageUrl || ''} onChange={(event) => updateArrayItem(['products'], index, 'imageUrl', event.target.value)} placeholder="/uploads/products/frame-1.jpg" /></label>
-                <label className="admin-field admin-field-full"><span>Highlight Produk</span><textarea value={(item.features || []).join('\n')} onChange={(event) => updateArrayItem(['products'], index, 'features', event.target.value.split('\n').map((feature) => feature.trim()).filter(Boolean))} placeholder="Baris 1 = chip highlight pertama" /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['products'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-card">
         <div className="admin-card-head">
-          <h3>Flow Produk & Checkout</h3>
+          <h3>Flow Checkout</h3>
         </div>
         <div className="admin-grid-two">
           <label className="admin-field">

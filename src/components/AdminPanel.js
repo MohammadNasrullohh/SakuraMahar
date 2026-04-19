@@ -9,6 +9,7 @@ import AdminMessagesTab from './admin/AdminMessagesTab';
 import AdminMediaTab from './admin/AdminMediaTab';
 import AdminAuditTab from './admin/AdminAuditTab';
 import AdminOrdersTab from './admin/AdminOrdersTab';
+import AdminProductsTab from './admin/AdminProductsTab';
 import {
   addMaharPayment,
   createGuest,
@@ -53,7 +54,15 @@ const tabs = [
     navHint: '',
     icon: 'fa-pencil-ruler',
     title: 'Storefront',
-    description: 'Kelola tampilan publik dan katalog.'
+    description: 'Kelola branding, hero, dan section publik.'
+  },
+  {
+    id: 'products',
+    label: 'Produk',
+    navHint: '',
+    icon: 'fa-box-open',
+    title: 'Produk',
+    description: 'Tambah, edit, dan hapus katalog toko.'
   },
   {
     id: 'users',
@@ -195,8 +204,21 @@ const AdminPanel = ({
   const topPage = analyticsPages[0] || null;
   const maxTrafficViews = Math.max(...trafficWindow.map((entry) => Number(entry.pageViews || 0)), 1);
   const hasPerformanceData = websiteVisitors > 0 || websitePageViews > 0 || websiteLeads > 0 || websiteOrders > 0;
-  const productCount = siteContent?.products?.length ?? contentForm?.products?.length ?? 0;
-  const testimonialCount = siteContent?.testimonials?.length ?? contentForm?.testimonials?.length ?? 0;
+  const currentProducts = Array.isArray(contentForm?.products)
+    ? contentForm.products
+    : Array.isArray(siteContent?.products)
+      ? siteContent.products
+      : [];
+  const currentTestimonials = Array.isArray(contentForm?.testimonials)
+    ? contentForm.testimonials
+    : Array.isArray(siteContent?.testimonials)
+      ? siteContent.testimonials
+      : [];
+  const productCount = currentProducts.length;
+  const featuredProductCount = currentProducts.filter((item) => item?.featured !== false).length;
+  const popularProductCount = currentProducts.filter((item) => item?.popular).length;
+  const categoryCount = new Set(currentProducts.map((item) => String(item?.category || '').trim()).filter(Boolean)).size;
+  const testimonialCount = currentTestimonials.length;
   const unreadMessageCount = overview.unreadMessages ?? messages.filter((item) => item.status === 'unread').length;
   const activeOrderCount = overview.openOrders ?? orders.filter((item) => !['completed', 'cancelled'].includes(item.status)).length;
   const completedOrderCount = orders.filter((item) => item.status === 'completed').length;
@@ -240,15 +262,21 @@ const AdminPanel = ({
     }
   ];
   const quickActions = [
+    { id: 'products', label: 'Kelola Produk' },
     { id: 'content', label: 'Edit Storefront' },
     { id: 'orders', label: 'Cek Order' },
-    { id: 'messages', label: 'Balas Lead' },
-    { id: 'media', label: 'Kelola Media' }
+    { id: 'messages', label: 'Balas Lead' }
   ];
   const compactHeaderStats = {
     content: [
       { id: 'products', label: 'Produk', value: formatMetricValue(productCount) },
       { id: 'testimonials', label: 'Testimoni', value: formatMetricValue(testimonialCount) }
+    ],
+    products: [
+      { id: 'products', label: 'Produk', value: formatMetricValue(productCount) },
+      { id: 'featuredProducts', label: 'Unggulan', value: formatMetricValue(featuredProductCount) },
+      { id: 'popularProducts', label: 'Populer', value: formatMetricValue(popularProductCount) },
+      { id: 'categories', label: 'Kategori', value: formatMetricValue(categoryCount) }
     ],
     users: [
       { id: 'users', label: 'User', value: formatMetricValue(users.length) },
@@ -281,6 +309,21 @@ const AdminPanel = ({
   const setSuccess = (message) => setStatus({ type: 'success', message });
   const setError = (message) => setStatus({ type: 'error', message });
   const setTabFilter = (tab, field, value) => setFilters((current) => ({ ...current, [tab]: { ...current[tab], [field]: value } }));
+  const setProductsCatalog = (nextProducts) => {
+    const normalizedProducts = Array.isArray(nextProducts)
+      ? nextProducts.map((item, index) => ({
+        ...item,
+        id: item?.id ?? index + 1,
+        features: Array.isArray(item?.features) ? item.features : []
+      }))
+      : [];
+
+    setContentForm((current) => ({
+      ...current,
+      products: normalizedProducts,
+      services: clone(normalizedProducts)
+    }));
+  };
 
   const refreshAuditData = async () => {
     try {
@@ -446,20 +489,34 @@ const AdminPanel = ({
   const saveOrder = async (item) => { try { const response = await updateOrder(item.id, { status: item.status, priority: item.priority, adminNotes: item.adminNotes || '' }); setOrders((current) => current.map((currentItem) => (currentItem.id === item.id ? response.order : currentItem))); await syncAfterMutation(); setSuccess(`Order ${response.order.orderCode} berhasil diperbarui.`); } catch (error) { setError(error.message || 'Order gagal diperbarui.'); } };
   const removeOrder = async (id) => { try { await deleteOrder(id); setOrders((current) => current.filter((item) => item.id !== id)); await syncAfterMutation(); setSuccess(`Order #${id} dihapus.`); } catch (error) { setError(error.message || 'Order gagal dihapus.'); } };
 
-  const handleMediaUpload = async () => {
-    if (!uploadDraft.file) {
+  const handleMediaUpload = async (incomingFiles = null) => {
+    const pendingFiles = Array.isArray(incomingFiles)
+      ? incomingFiles.filter(Boolean)
+      : incomingFiles
+        ? Array.from(incomingFiles).filter(Boolean)
+        : uploadDraft.file
+          ? [uploadDraft.file]
+          : [];
+
+    if (!pendingFiles.length) {
       setError('Pilih file media terlebih dahulu.');
       return;
     }
 
-    setUploadDraft((current) => ({ ...current, isUploading: true }));
+    setUploadDraft((current) => ({ ...current, file: pendingFiles[0], isUploading: true }));
     try {
-      const response = await uploadMediaAsset(uploadDraft.file, uploadDraft.folder);
-      setMediaAssets((current) => [response.asset, ...current]);
+      const uploadedAssets = [];
+
+      for (const file of pendingFiles) {
+        const response = await uploadMediaAsset(file, uploadDraft.folder);
+        uploadedAssets.push(response.asset);
+      }
+
+      setMediaAssets((current) => [...uploadedAssets.reverse(), ...current]);
       setUploadDraft((current) => ({ ...current, file: null, isUploading: false }));
       await refreshMediaData();
       await syncAfterMutation();
-      setSuccess('Media berhasil diunggah.');
+      setSuccess(pendingFiles.length > 1 ? `${pendingFiles.length} media berhasil diunggah.` : 'Media berhasil diunggah.');
     } catch (error) {
       setUploadDraft((current) => ({ ...current, isUploading: false }));
       setError(error.message || 'Media gagal diunggah.');
@@ -567,7 +624,7 @@ const AdminPanel = ({
           <div className="admin-card-head">
             <h3>Snapshot</h3>
           </div>
-          <div className="admin-meta-list admin-meta-list-compact">
+            <div className="admin-meta-list admin-meta-list-compact">
             <div><strong>Halaman teratas</strong><span>{topPage?.label || '-'}</span></div>
             <div><strong>Views teratas</strong><span>{formatMetricValue(topPage?.views || 0)}</span></div>
             <div><strong>Pesan belum dibalas</strong><span>{formatMetricValue(overview.unreadMessages ?? messages.filter((item) => item.status === 'unread').length)}</span></div>
@@ -603,7 +660,7 @@ const AdminPanel = ({
           </div>
           <div className="admin-meta-list admin-meta-list-compact">
             <div><strong>Brand</strong><span>{brandName}</span></div>
-            <div><strong>Total Produk</strong><span>{formatMetricValue(siteContent?.products?.length ?? contentForm?.products?.length ?? 0)}</span></div>
+            <div><strong>Total Produk</strong><span>{formatMetricValue(productCount)}</span></div>
             <div><strong>Order Aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((order) => !['completed', 'cancelled'].includes(order.status)).length)}</span></div>
             <div><strong>Pesan</strong><span>{formatMetricValue(overview.messages ?? messages.length)}</span></div>
             <div><strong>Audit</strong><span>{formatMetricValue(overview.auditLogs ?? auditLogs.length)}</span></div>
@@ -665,6 +722,16 @@ const AdminPanel = ({
         return renderOverviewTab();
       case 'content':
         return <ContentStudio value={contentForm} onChange={setContentForm} onSave={saveContent} isSaving={isSaving} mediaAssets={mediaAssets} />;
+      case 'products':
+        return (
+          <AdminProductsTab
+            products={currentProducts}
+            setProducts={setProductsCatalog}
+            onSave={saveContent}
+            isSaving={isSaving}
+            mediaAssets={mediaAssets}
+          />
+        );
       case 'users':
         return <AdminUsersTab users={users} filters={filters.users} setFilter={(field, value) => setTabFilter('users', field, value)} currentUserEmail={user.email} updateListItem={(id, field, value) => updateListItem(setUsers, id, field, value)} saveUser={saveUser} removeUser={removeUser} />;
       case 'mahars':
@@ -748,6 +815,7 @@ const AdminPanel = ({
               {tabs.map((tab) => {
                 const badgeValue =
                   tab.id === 'users' ? users.length :
+                    tab.id === 'products' ? productCount :
                     tab.id === 'mahars' ? mahars.length :
                       tab.id === 'guests' ? guests.length :
                         tab.id === 'invitations' ? invitations.length :

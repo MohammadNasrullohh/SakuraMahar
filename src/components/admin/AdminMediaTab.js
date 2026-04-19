@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { stringifyForSearch } from './adminUtils';
 
 const resolveAssetPath = (asset = {}) => {
@@ -33,6 +33,8 @@ const AdminMediaTab = ({
   saveMediaAsset,
   removeMediaAsset
 }) => {
+  const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
   const filteredMediaAssets = useMemo(
     () =>
       mediaAssets.filter((item) => {
@@ -43,30 +45,99 @@ const AdminMediaTab = ({
     [filters.folder, filters.search, mediaAssets]
   );
 
+  const handlePickedFiles = (fileList) => {
+    const pickedFiles = Array.from(fileList || []).filter((file) => file?.type?.startsWith('image/'));
+
+    if (!pickedFiles.length) {
+      return;
+    }
+
+    setUploadDraft((current) => ({ ...current, file: pickedFiles[0] || null }));
+    handleMediaUpload(pickedFiles);
+  };
+
+  const clearDragState = () => setIsDragging(false);
+
   return (
     <>
       <div className="admin-card admin-card-highlight">
         <div className="admin-card-head">
           <div>
             <h3>Media</h3>
-            <p>Upload gambar ke Cloudinary atau backend lokal, lalu gunakan URL/Path yang muncul di Content Studio untuk logo, favicon, banner toko, dan foto produk.</p>
+            <p>Tarik gambar langsung ke area upload, lalu pakai aset yang masuk untuk logo, banner, dan katalog produk.</p>
           </div>
         </div>
-        <div className="admin-toolbar">
-          <select value={uploadDraft.folder} onChange={(event) => setUploadDraft((current) => ({ ...current, folder: event.target.value }))}>
-            <option value="branding">branding</option>
-            <option value="hero">hero</option>
-            <option value="products">products</option>
-            <option value="storefront">storefront</option>
-            <option value="general">general</option>
-          </select>
-          <input type="file" accept="image/*" onChange={(event) => setUploadDraft((current) => ({ ...current, file: event.target.files?.[0] || null }))} />
-          <button type="button" className="btn-primary" onClick={handleMediaUpload} disabled={uploadDraft.isUploading}>
-            {uploadDraft.isUploading ? 'Mengunggah...' : 'Upload Gambar'}
-          </button>
+        <div className="admin-upload-stack">
+          <div className="admin-upload-folder-row">
+            <label className="admin-field admin-upload-folder-field">
+              <span>Folder Upload</span>
+              <select value={uploadDraft.folder} onChange={(event) => setUploadDraft((current) => ({ ...current, folder: event.target.value }))}>
+                <option value="branding">branding</option>
+                <option value="hero">hero</option>
+                <option value="products">products</option>
+                <option value="storefront">storefront</option>
+                <option value="general">general</option>
+              </select>
+            </label>
+            {uploadDraft.file ? (
+              <div className="admin-upload-file-chip">
+                <strong>{uploadDraft.file.name}</strong>
+                <span>{uploadDraft.isUploading ? 'Sedang diunggah...' : 'Siap diproses'}</span>
+              </div>
+            ) : null}
+          </div>
+
+          <div
+            className={`admin-upload-dropzone ${isDragging ? 'active' : ''} ${uploadDraft.isUploading ? 'is-uploading' : ''}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDragEnter={(event) => {
+              event.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              clearDragState();
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              clearDragState();
+              handlePickedFiles(event.dataTransfer.files);
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              className="admin-upload-hidden-input"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                handlePickedFiles(event.target.files);
+                event.target.value = '';
+              }}
+            />
+            <strong>{uploadDraft.isUploading ? 'Mengunggah gambar...' : 'Drag & drop gambar di sini'}</strong>
+            <span>
+              {uploadDraft.isUploading
+                ? 'Upload sedang berjalan. Tunggu sebentar sampai media masuk ke daftar.'
+                : 'Klik area ini atau tarik satu sampai beberapa gambar sekaligus.'}
+            </span>
+            <small>Folder aktif: {uploadDraft.folder}</small>
+          </div>
         </div>
         <div className="admin-toolbar-note">
-          Pakai folder `branding` untuk logo/favicon, `hero` untuk banner utama, `products` untuk katalog, dan `storefront` untuk visual pendukung toko.
+          Gunakan folder `branding` untuk logo dan favicon, `hero` untuk banner utama, `products` untuk katalog, dan `storefront` untuk visual pendukung toko.
         </div>
       </div>
 
@@ -97,14 +168,19 @@ const AdminMediaTab = ({
                     <span>{asset.provider || 'local'}</span>
                   </div>
                   <code className="media-card-path">{assetPath || asset.url}</code>
-                  <label className="admin-field">
-                    <span>Nama Tampil</span>
-                    <input value={asset.displayName || ''} onChange={(event) => updateListItem(asset.id, 'displayName', event.target.value)} placeholder={asset.originalName} />
-                  </label>
-                  <label className="admin-field">
-                    <span>Alt Text</span>
-                    <input value={asset.altText || ''} onChange={(event) => updateListItem(asset.id, 'altText', event.target.value)} placeholder="Deskripsi gambar untuk SEO/accessibility" />
-                  </label>
+                  <details className="admin-dropdown-card">
+                    <summary>Ubah metadata</summary>
+                    <div className="admin-dropdown-body">
+                      <label className="admin-field">
+                        <span>Nama Tampil</span>
+                        <input value={asset.displayName || ''} onChange={(event) => updateListItem(asset.id, 'displayName', event.target.value)} placeholder={asset.originalName} />
+                      </label>
+                      <label className="admin-field">
+                        <span>Alt Text</span>
+                        <input value={asset.altText || ''} onChange={(event) => updateListItem(asset.id, 'altText', event.target.value)} placeholder="Deskripsi gambar untuk SEO/accessibility" />
+                      </label>
+                    </div>
+                  </details>
                   <div className="admin-actions">
                     <button type="button" className="btn-primary" onClick={() => saveMediaAsset(asset)}>
                       Simpan
