@@ -1,4 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import AdminImageDropzone from './AdminImageDropzone';
+import AdminOverlayForm from './AdminOverlayForm';
 import { stringifyForSearch } from './adminUtils';
 
 const resolveAssetPath = (asset = {}) => {
@@ -21,6 +23,8 @@ const resolveAssetPath = (asset = {}) => {
   return '';
 };
 
+const cloneItem = (item) => JSON.parse(JSON.stringify(item || null));
+
 const AdminMediaTab = ({
   mediaAssets,
   filters,
@@ -29,12 +33,11 @@ const AdminMediaTab = ({
   setUploadDraft,
   handleMediaUpload,
   copyText,
-  updateListItem,
   saveMediaAsset,
   removeMediaAsset
 }) => {
-  const fileInputRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [editingAsset, setEditingAsset] = useState(null);
+
   const filteredMediaAssets = useMemo(
     () =>
       mediaAssets.filter((item) => {
@@ -45,18 +48,7 @@ const AdminMediaTab = ({
     [filters.folder, filters.search, mediaAssets]
   );
 
-  const handlePickedFiles = (fileList) => {
-    const pickedFiles = Array.from(fileList || []).filter((file) => file?.type?.startsWith('image/'));
-
-    if (!pickedFiles.length) {
-      return;
-    }
-
-    setUploadDraft((current) => ({ ...current, file: pickedFiles[0] || null }));
-    handleMediaUpload(pickedFiles);
-  };
-
-  const clearDragState = () => setIsDragging(false);
+  const openMetadataForm = (asset) => setEditingAsset(cloneItem(asset));
 
   return (
     <>
@@ -64,7 +56,7 @@ const AdminMediaTab = ({
         <div className="admin-card-head">
           <div>
             <h3>Media</h3>
-            <p>Tarik gambar langsung ke area upload, lalu pakai aset yang masuk untuk logo, banner, dan katalog produk.</p>
+            <p>Upload gambar dengan drag-and-drop, lalu buka form metadata di atas halaman ini saat perlu edit nama tampil atau alt text.</p>
           </div>
         </div>
         <div className="admin-upload-stack">
@@ -87,54 +79,16 @@ const AdminMediaTab = ({
             ) : null}
           </div>
 
-          <div
-            className={`admin-upload-dropzone ${isDragging ? 'active' : ''} ${uploadDraft.isUploading ? 'is-uploading' : ''}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => fileInputRef.current?.click()}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                fileInputRef.current?.click();
-              }
+          <AdminImageDropzone
+            title="Drag & drop gambar di sini"
+            hint="Klik area ini atau tarik satu sampai beberapa gambar sekaligus."
+            folderLabel={`Folder aktif: ${uploadDraft.folder}`}
+            isUploading={uploadDraft.isUploading}
+            onFilesSelected={(files) => {
+              setUploadDraft((current) => ({ ...current, file: files[0] || null }));
+              handleMediaUpload(files, uploadDraft.folder);
             }}
-            onDragEnter={(event) => {
-              event.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={(event) => {
-              event.preventDefault();
-              clearDragState();
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              clearDragState();
-              handlePickedFiles(event.dataTransfer.files);
-            }}
-          >
-            <input
-              ref={fileInputRef}
-              className="admin-upload-hidden-input"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(event) => {
-                handlePickedFiles(event.target.files);
-                event.target.value = '';
-              }}
-            />
-            <strong>{uploadDraft.isUploading ? 'Mengunggah gambar...' : 'Drag & drop gambar di sini'}</strong>
-            <span>
-              {uploadDraft.isUploading
-                ? 'Upload sedang berjalan. Tunggu sebentar sampai media masuk ke daftar.'
-                : 'Klik area ini atau tarik satu sampai beberapa gambar sekaligus.'}
-            </span>
-            <small>Folder aktif: {uploadDraft.folder}</small>
-          </div>
+          />
         </div>
         <div className="admin-toolbar-note">
           Gunakan folder `branding` untuk logo dan favicon, `hero` untuk banner utama, `products` untuk katalog, dan `storefront` untuk visual pendukung toko.
@@ -168,22 +122,9 @@ const AdminMediaTab = ({
                     <span>{asset.provider || 'local'}</span>
                   </div>
                   <code className="media-card-path">{assetPath || asset.url}</code>
-                  <details className="admin-dropdown-card">
-                    <summary>Ubah metadata</summary>
-                    <div className="admin-dropdown-body">
-                      <label className="admin-field">
-                        <span>Nama Tampil</span>
-                        <input value={asset.displayName || ''} onChange={(event) => updateListItem(asset.id, 'displayName', event.target.value)} placeholder={asset.originalName} />
-                      </label>
-                      <label className="admin-field">
-                        <span>Alt Text</span>
-                        <input value={asset.altText || ''} onChange={(event) => updateListItem(asset.id, 'altText', event.target.value)} placeholder="Deskripsi gambar untuk SEO/accessibility" />
-                      </label>
-                    </div>
-                  </details>
                   <div className="admin-actions">
-                    <button type="button" className="btn-primary" onClick={() => saveMediaAsset(asset)}>
-                      Simpan
+                    <button type="button" className="btn-primary" onClick={() => openMetadataForm(asset)}>
+                      Edit Metadata
                     </button>
                     <button type="button" className="btn-secondary" onClick={() => copyText(assetPath || asset.url)}>
                       Salin Path/URL
@@ -203,6 +144,43 @@ const AdminMediaTab = ({
       ) : (
         <div className="admin-empty">Belum ada media yang cocok dengan filter ini.</div>
       )}
+
+      <AdminOverlayForm
+        isOpen={Boolean(editingAsset)}
+        tag="Media"
+        title={editingAsset?.displayName || editingAsset?.originalName || 'Edit Metadata'}
+        description={editingAsset ? `${editingAsset.folder || 'general'} · ${editingAsset.provider || 'local'}` : ''}
+        onClose={() => setEditingAsset(null)}
+        actions={
+          editingAsset ? (
+            <>
+              <button type="button" className="btn-secondary" onClick={() => setEditingAsset(null)}>
+                Tutup
+              </button>
+              <button type="button" className="btn-primary" onClick={() => { saveMediaAsset(editingAsset); setEditingAsset(null); }}>
+                Simpan Metadata
+              </button>
+            </>
+          ) : null
+        }
+      >
+        {editingAsset ? (
+          <div className="admin-overlay-stack">
+            {editingAsset.mimeType?.startsWith('image/') ? (
+              <img src={editingAsset.url} alt={editingAsset.originalName} className="admin-overlay-image-preview" />
+            ) : null}
+            <label className="admin-field">
+              <span>Nama Tampil</span>
+              <input value={editingAsset.displayName || ''} onChange={(event) => setEditingAsset((current) => ({ ...current, displayName: event.target.value }))} placeholder={editingAsset.originalName} />
+            </label>
+            <label className="admin-field">
+              <span>Alt Text</span>
+              <input value={editingAsset.altText || ''} onChange={(event) => setEditingAsset((current) => ({ ...current, altText: event.target.value }))} placeholder="Deskripsi gambar untuk SEO/accessibility" />
+            </label>
+            <code className="media-card-path">{resolveAssetPath(editingAsset) || editingAsset.url}</code>
+          </div>
+        ) : null}
+      </AdminOverlayForm>
     </>
   );
 };

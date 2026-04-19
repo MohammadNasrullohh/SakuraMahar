@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import AdminImageDropzone from './admin/AdminImageDropzone';
+import AdminOverlayForm from './admin/AdminOverlayForm';
 import { defaultCheckoutContent, normalizeCheckoutContent } from '../utils/checkoutContent';
 
 export const createInitialContent = () => ({
@@ -183,7 +185,6 @@ export const normalizeContentValue = (value) => {
 };
 
 const cloneContent = (value) => JSON.parse(JSON.stringify(normalizeContentValue(value)));
-
 const isImageAsset = (asset) => asset?.mimeType?.startsWith('image/');
 
 const resolveAssetPath = (asset = {}) => {
@@ -206,9 +207,21 @@ const resolveAssetPath = (asset = {}) => {
   return '';
 };
 
-const ContentStudio = ({ value, onChange, onSave, isSaving, mediaAssets = [] }) => {
+const ContentStudio = ({
+  value,
+  onChange,
+  onSave,
+  isSaving,
+  mediaAssets = [],
+  onUploadImages,
+  uploadDraft
+}) => {
+  const [activePanel, setActivePanel] = useState('');
   const content = normalizeContentValue(value);
-  const imageAssets = (Array.isArray(mediaAssets) ? mediaAssets : []).filter(isImageAsset);
+  const imageAssets = useMemo(
+    () => (Array.isArray(mediaAssets) ? mediaAssets : []).filter(isImageAsset),
+    [mediaAssets]
+  );
 
   const updateAtPath = (path, updater) => {
     const next = cloneContent(content);
@@ -227,22 +240,19 @@ const ContentStudio = ({ value, onChange, onSave, isSaving, mediaAssets = [] }) 
     onChange(next);
   };
 
-  const updateField = (path, fieldValue) => {
-    updateAtPath(path, () => fieldValue);
-  };
+  const updateField = (path, fieldValue) => updateAtPath(path, () => fieldValue);
+  const updateArrayItem = (path, itemIndex, field, fieldValue) => updateAtPath(path, (items) => items.map((item, index) => (index === itemIndex ? { ...item, [field]: fieldValue } : item)));
+  const addArrayItem = (path, itemFactory) => updateAtPath(path, (items) => [...items, { id: createId(), ...itemFactory }]);
+  const removeArrayItem = (path, itemIndex) => updateAtPath(path, (items) => items.filter((_, index) => index !== itemIndex));
 
-  const updateArrayItem = (path, itemIndex, field, fieldValue) => {
-    updateAtPath(path, (items) =>
-      items.map((item, index) => (index === itemIndex ? { ...item, [field]: fieldValue } : item))
-    );
-  };
+  const uploadAndAssignImage = async (files, folder, targetPath) => {
+    const assets = await onUploadImages?.(files, folder);
+    const firstAsset = Array.isArray(assets) ? assets[0] : null;
+    const nextPath = resolveAssetPath(firstAsset);
 
-  const addArrayItem = (path, itemFactory) => {
-    updateAtPath(path, (items) => [...items, { id: createId(), ...itemFactory }]);
-  };
-
-  const removeArrayItem = (path, itemIndex) => {
-    updateAtPath(path, (items) => items.filter((_, index) => index !== itemIndex));
+    if (nextPath) {
+      updateField(targetPath, nextPath);
+    }
   };
 
   const renderUsageState = (assetPath) => {
@@ -315,259 +325,212 @@ const ContentStudio = ({ value, onChange, onSave, isSaving, mediaAssets = [] }) 
     );
   };
 
-  const renderArrayHeader = (title, description, addHandler, addLabel) => (
-    <div className="admin-card-head content-head">
-      <div>
-        <h3>{title}</h3>
-        {description && <p>{description}</p>}
+  const sectionLaunchers = [
+    { id: 'branding', title: 'Branding', description: 'Nama brand, logo, favicon, dan metadata browser.' },
+    { id: 'hero', title: 'Hero', description: 'Badge, headline, tombol utama, dan foto hero.' },
+    { id: 'heroStats', title: 'Hero Stats', description: `${content.heroStats.length} stat aktif di homepage.` },
+    { id: 'features', title: 'Fitur', description: `${content.features.length} fitur utama tampil di homepage.` },
+    { id: 'checkout', title: 'Checkout', description: 'Atur flow checkout, label tombol, dan copy pendukung.' },
+    { id: 'checkoutFields', title: 'Field Checkout', description: `${content.checkout.fields.length} field aktif di form checkout.` },
+    { id: 'testimonials', title: 'Testimoni', description: `${content.testimonials.length} testimoni tersimpan.` },
+    { id: 'contact', title: 'Kontak & Footer', description: 'Nomor, email, alamat, dan deskripsi footer.' },
+    { id: 'contactSocials', title: 'Social Kontak', description: `${content.contact.socials.length} tautan social.` },
+    { id: 'footerLinks', title: 'Footer Links', description: `${content.footer.helpLinks.length} link bantuan.` }
+  ];
+
+  const panelMeta = {
+    branding: {
+      title: 'Branding',
+      description: 'Edit brand, logo, dan favicon lewat panel overlay.'
+    },
+    hero: {
+      title: 'Hero',
+      description: 'Edit teks utama dan gambar hero tanpa memenuhi halaman utama.'
+    },
+    heroStats: {
+      title: 'Hero Stats',
+      description: 'Tambah, ubah, dan hapus stat homepage.'
+    },
+    features: {
+      title: 'Fitur Homepage',
+      description: 'Kelola poin fitur utama yang tampil di homepage.'
+    },
+    checkout: {
+      title: 'Flow Checkout',
+      description: 'Atur seluruh copy dan perilaku checkout.'
+    },
+    checkoutFields: {
+      title: 'Field Checkout',
+      description: 'Atur field yang tampil di form checkout produk.'
+    },
+    testimonials: {
+      title: 'Testimoni',
+      description: 'Kelola testimoni secara terpisah agar lebih rapi.'
+    },
+    contact: {
+      title: 'Kontak & Footer',
+      description: 'Edit data kontak utama dan copy footer.'
+    },
+    contactSocials: {
+      title: 'Social Kontak',
+      description: 'Tambah atau edit akun social yang tampil di website.'
+    },
+    footerLinks: {
+      title: 'Footer Links',
+      description: 'Atur link bantuan di footer.'
+    }
+  }[activePanel] || { title: 'Storefront', description: '' };
+
+  const renderBrandingPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-detail-grid">
+        <label className="admin-field"><span>Nama Brand</span><input value={content.branding.brandName || ''} onChange={(event) => updateField(['branding', 'brandName'], event.target.value)} /></label>
+        <label className="admin-field"><span>Judul Browser</span><input value={content.branding.browserTitle || ''} onChange={(event) => updateField(['branding', 'browserTitle'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Meta Description</span><textarea value={content.branding.metaDescription || ''} onChange={(event) => updateField(['branding', 'metaDescription'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Path/URL Logo</span><input value={content.branding.logoUrl || ''} onChange={(event) => updateField(['branding', 'logoUrl'], event.target.value)} placeholder="/uploads/branding/logo.png atau https://res.cloudinary.com/..." /></label>
+        <label className="admin-field"><span>Alt Logo</span><input value={content.branding.logoAlt || ''} onChange={(event) => updateField(['branding', 'logoAlt'], event.target.value)} /></label>
+        <label className="admin-field"><span>Class Icon Logo</span><input value={content.branding.logoIconClass || ''} onChange={(event) => updateField(['branding', 'logoIconClass'], event.target.value)} placeholder="fas fa-cherry" /></label>
+        <label className="admin-field admin-field-full"><span>Path/URL Favicon</span><input value={content.branding.faviconUrl || ''} onChange={(event) => updateField(['branding', 'faviconUrl'], event.target.value)} placeholder="/uploads/branding/favicon.png atau https://res.cloudinary.com/..." /></label>
       </div>
-      <button type="button" className="btn-secondary" onClick={addHandler}>
-        {addLabel}
-      </button>
+
+      <div className="admin-grid-two">
+        <AdminImageDropzone
+          title="Drag & drop logo"
+          hint="Upload logo ke folder branding lalu otomatis masuk ke field logo."
+          folderLabel="Upload ke: branding"
+          isUploading={uploadDraft?.isUploading}
+          onFilesSelected={(files) => uploadAndAssignImage(files, 'branding', ['branding', 'logoUrl'])}
+        />
+        <AdminImageDropzone
+          title="Drag & drop favicon"
+          hint="Upload favicon ke folder branding lalu otomatis masuk ke field favicon."
+          folderLabel="Upload ke: branding"
+          isUploading={uploadDraft?.isUploading}
+          onFilesSelected={(files) => uploadAndAssignImage(files, 'branding', ['branding', 'faviconUrl'])}
+        />
+      </div>
+
+      <div className="branding-preview-grid">
+        <div className="branding-preview-card">
+          <small>Logo</small>
+          {content.branding.logoUrl ? <img src={content.branding.logoUrl} alt={content.branding.logoAlt || content.branding.brandName || 'Logo'} className="branding-preview-logo" /> : <div className="branding-preview-placeholder">Belum ada logo</div>}
+        </div>
+        <div className="branding-preview-card">
+          <small>Favicon</small>
+          {content.branding.faviconUrl ? <img src={content.branding.faviconUrl} alt="Favicon preview" className="branding-preview-favicon" /> : <div className="branding-preview-placeholder">Belum ada favicon</div>}
+        </div>
+      </div>
     </div>
   );
 
-  return (
-    <div className="content-studio">
-      <div className="admin-card admin-card-highlight">
-        <div className="admin-card-head">
-          <div>
-            <h3>Media Workflow</h3>
-            <p>Upload gambar ke Cloudinary atau media lokal, lalu pilih langsung untuk logo, favicon, banner hero, dan foto produk tanpa perlu copas URL manual.</p>
+  const renderHeroPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-detail-grid">
+        <label className="admin-field"><span>Badge</span><input value={content.hero.badge || ''} onChange={(event) => updateField(['hero', 'badge'], event.target.value)} /></label>
+        <label className="admin-field"><span>Judul</span><input value={content.hero.title || ''} onChange={(event) => updateField(['hero', 'title'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Deskripsi</span><textarea value={content.hero.description || ''} onChange={(event) => updateField(['hero', 'description'], event.target.value)} /></label>
+        <label className="admin-field"><span>Tombol Utama</span><input value={content.hero.primaryButtonLabel || ''} onChange={(event) => updateField(['hero', 'primaryButtonLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Tombol Kedua</span><input value={content.hero.secondaryButtonLabel || ''} onChange={(event) => updateField(['hero', 'secondaryButtonLabel'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Hero Image Path/URL</span><input value={content.hero.imageUrl || ''} onChange={(event) => updateField(['hero', 'imageUrl'], event.target.value)} placeholder="/uploads/hero/hero-image.jpg atau https://res.cloudinary.com/..." /></label>
+      </div>
+
+      <AdminImageDropzone
+        title="Drag & drop gambar hero"
+        hint="Upload gambar hero ke folder hero lalu otomatis masuk ke field gambar."
+        folderLabel="Upload ke: hero"
+        isUploading={uploadDraft?.isUploading}
+        onFilesSelected={(files) => uploadAndAssignImage(files, 'hero', ['hero', 'imageUrl'])}
+      />
+    </div>
+  );
+
+  const renderHeroStatsPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-actions">
+        <button type="button" className="btn-secondary" onClick={() => addArrayItem(['heroStats'], { value: '', label: '' })}>
+          Tambah Stat
+        </button>
+      </div>
+      <div className="admin-list">
+        {content.heroStats.map((item, index) => (
+          <div key={item.id || index} className="admin-card">
+            <div className="admin-grid-two">
+              <label className="admin-field"><span>Value</span><input value={item.value || ''} onChange={(event) => updateArrayItem(['heroStats'], index, 'value', event.target.value)} /></label>
+              <label className="admin-field"><span>Label</span><input value={item.label || ''} onChange={(event) => updateArrayItem(['heroStats'], index, 'label', event.target.value)} /></label>
+            </div>
+            <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['heroStats'], index)}>Hapus</button></div>
           </div>
-        </div>
-        {renderQuickMediaLibrary()}
+        ))}
       </div>
+    </div>
+  );
 
-      <div className="admin-card">
-        <div className="admin-card-head">
-          <h3>Branding, Logo & Favicon</h3>
-        </div>
-        <div className="admin-grid-two">
-          <label className="admin-field"><span>Nama Brand</span><input value={content.branding.brandName || ''} onChange={(event) => updateField(['branding', 'brandName'], event.target.value)} /></label>
-          <label className="admin-field"><span>Judul Browser</span><input value={content.branding.browserTitle || ''} onChange={(event) => updateField(['branding', 'browserTitle'], event.target.value)} /></label>
-          <label className="admin-field admin-field-full"><span>Meta Description</span><textarea value={content.branding.metaDescription || ''} onChange={(event) => updateField(['branding', 'metaDescription'], event.target.value)} /></label>
-          <label className="admin-field admin-field-full"><span>Path/URL Logo</span><input value={content.branding.logoUrl || ''} onChange={(event) => updateField(['branding', 'logoUrl'], event.target.value)} placeholder="/uploads/branding/logo.png atau https://res.cloudinary.com/..." /></label>
-          <label className="admin-field"><span>Alt Logo</span><input value={content.branding.logoAlt || ''} onChange={(event) => updateField(['branding', 'logoAlt'], event.target.value)} /></label>
-          <label className="admin-field"><span>Class Icon Logo</span><input value={content.branding.logoIconClass || ''} onChange={(event) => updateField(['branding', 'logoIconClass'], event.target.value)} placeholder="fas fa-cherry" /></label>
-          <label className="admin-field admin-field-full"><span>Path/URL Favicon</span><input value={content.branding.faviconUrl || ''} onChange={(event) => updateField(['branding', 'faviconUrl'], event.target.value)} placeholder="/uploads/branding/favicon.png atau https://res.cloudinary.com/..." /></label>
-          <div className="admin-field admin-field-full">
-            <span>Preview Branding</span>
-            <div className="branding-preview-grid">
-              <div className="branding-preview-card">
-                <small>Logo</small>
-                {content.branding.logoUrl ? <img src={content.branding.logoUrl} alt={content.branding.logoAlt || content.branding.brandName || 'Logo'} className="branding-preview-logo" /> : <div className="branding-preview-placeholder">Belum ada logo</div>}
-              </div>
-              <div className="branding-preview-card">
-                <small>Favicon</small>
-                {content.branding.faviconUrl ? <img src={content.branding.faviconUrl} alt="Favicon preview" className="branding-preview-favicon" /> : <div className="branding-preview-placeholder">Belum ada favicon</div>}
-              </div>
+  const renderFeaturesPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-actions">
+        <button type="button" className="btn-secondary" onClick={() => addArrayItem(['features'], { icon: 'fa-star', title: '', description: '' })}>
+          Tambah Fitur
+        </button>
+      </div>
+      <div className="admin-list">
+        {content.features.map((item, index) => (
+          <div key={item.id || index} className="admin-card">
+            <div className="admin-grid-two">
+              <label className="admin-field"><span>Icon</span><input value={item.icon || ''} onChange={(event) => updateArrayItem(['features'], index, 'icon', event.target.value)} /></label>
+              <label className="admin-field"><span>Judul</span><input value={item.title || ''} onChange={(event) => updateArrayItem(['features'], index, 'title', event.target.value)} /></label>
+              <label className="admin-field admin-field-full"><span>Deskripsi</span><textarea value={item.description || ''} onChange={(event) => updateArrayItem(['features'], index, 'description', event.target.value)} /></label>
             </div>
+            <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['features'], index)}>Hapus</button></div>
           </div>
-        </div>
+        ))}
       </div>
+    </div>
+  );
 
-      <div className="admin-card">
-        <div className="admin-card-head">
-          <h3>Hero Publik</h3>
-        </div>
-        <div className="admin-grid-two">
-          <label className="admin-field"><span>Badge</span><input value={content.hero.badge || ''} onChange={(event) => updateField(['hero', 'badge'], event.target.value)} /></label>
-          <label className="admin-field"><span>Judul</span><input value={content.hero.title || ''} onChange={(event) => updateField(['hero', 'title'], event.target.value)} /></label>
-          <label className="admin-field admin-field-full"><span>Deskripsi</span><textarea value={content.hero.description || ''} onChange={(event) => updateField(['hero', 'description'], event.target.value)} /></label>
-          <label className="admin-field"><span>Tombol Utama</span><input value={content.hero.primaryButtonLabel || ''} onChange={(event) => updateField(['hero', 'primaryButtonLabel'], event.target.value)} /></label>
-          <label className="admin-field"><span>Tombol Kedua</span><input value={content.hero.secondaryButtonLabel || ''} onChange={(event) => updateField(['hero', 'secondaryButtonLabel'], event.target.value)} /></label>
-          <label className="admin-field admin-field-full"><span>Hero Image Path/URL</span><input value={content.hero.imageUrl || ''} onChange={(event) => updateField(['hero', 'imageUrl'], event.target.value)} placeholder="/uploads/hero/hero-image.jpg atau https://res.cloudinary.com/..." /></label>
-        </div>
+  const renderCheckoutPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-detail-grid">
+        <label className="admin-field"><span>Mode Tombol Utama Produk</span><select value={content.checkout.primaryActionMode || 'checkout'} onChange={(event) => updateField(['checkout', 'primaryActionMode'], event.target.value)}><option value="checkout">Checkout</option><option value="contact">Kontak</option><option value="whatsapp">WhatsApp</option></select></label>
+        <label className="admin-field"><span>Login Wajib Sebelum Checkout Produk</span><select value={content.checkout.requireLoginBeforeCheckout ? 'yes' : 'no'} onChange={(event) => updateField(['checkout', 'requireLoginBeforeCheckout'], event.target.value === 'yes')}><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label className="admin-field"><span>Label Tombol Saat Belum Login</span><input value={content.checkout.primaryActionLoggedOutLabel || ''} onChange={(event) => updateField(['checkout', 'primaryActionLoggedOutLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Tombol Saat Sudah Login</span><input value={content.checkout.primaryActionLoggedInLabel || ''} onChange={(event) => updateField(['checkout', 'primaryActionLoggedInLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Shortcut WhatsApp</span><select value={content.checkout.whatsappShortcutEnabled ? 'yes' : 'no'} onChange={(event) => updateField(['checkout', 'whatsappShortcutEnabled'], event.target.value === 'yes')}><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label className="admin-field"><span>Label Shortcut WhatsApp</span><input value={content.checkout.whatsappShortcutLabel || ''} onChange={(event) => updateField(['checkout', 'whatsappShortcutLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Shortcut Form Kontak</span><select value={content.checkout.contactShortcutEnabled ? 'yes' : 'no'} onChange={(event) => updateField(['checkout', 'contactShortcutEnabled'], event.target.value === 'yes')}><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label className="admin-field"><span>Label Shortcut Form Kontak</span><input value={content.checkout.contactShortcutLabel || ''} onChange={(event) => updateField(['checkout', 'contactShortcutLabel'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Pesan Modal Auth</span><textarea value={content.checkout.authPromptText || ''} onChange={(event) => updateField(['checkout', 'authPromptText'], event.target.value)} /></label>
+        <label className="admin-field"><span>Eyebrow Checkout</span><input value={content.checkout.pageEyebrow || ''} onChange={(event) => updateField(['checkout', 'pageEyebrow'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Produk Terpilih</span><input value={content.checkout.packageLabel || ''} onChange={(event) => updateField(['checkout', 'packageLabel'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Deskripsi Checkout</span><textarea value={content.checkout.pageDescription || ''} onChange={(event) => updateField(['checkout', 'pageDescription'], event.target.value)} /></label>
+        <label className="admin-field"><span>Judul Support Card</span><input value={content.checkout.supportCardTitle || ''} onChange={(event) => updateField(['checkout', 'supportCardTitle'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Tombol Support WhatsApp</span><input value={content.checkout.supportWhatsAppLabel || ''} onChange={(event) => updateField(['checkout', 'supportWhatsAppLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Tombol Support Kontak</span><input value={content.checkout.supportContactLabel || ''} onChange={(event) => updateField(['checkout', 'supportContactLabel'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Deskripsi Support Card</span><textarea value={content.checkout.supportCardDescription || ''} onChange={(event) => updateField(['checkout', 'supportCardDescription'], event.target.value)} /></label>
+        <label className="admin-field"><span>Judul Not Found</span><input value={content.checkout.notFoundTitle || ''} onChange={(event) => updateField(['checkout', 'notFoundTitle'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Kembali ke Produk</span><input value={content.checkout.backToPackagesLabel || ''} onChange={(event) => updateField(['checkout', 'backToPackagesLabel'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Deskripsi Not Found</span><textarea value={content.checkout.notFoundDescription || ''} onChange={(event) => updateField(['checkout', 'notFoundDescription'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Tombol Login</span><input value={content.checkout.loginButtonLabel || ''} onChange={(event) => updateField(['checkout', 'loginButtonLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Tombol Daftar</span><input value={content.checkout.registerButtonLabel || ''} onChange={(event) => updateField(['checkout', 'registerButtonLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Pakai Form Kontak</span><input value={content.checkout.useContactLabel || ''} onChange={(event) => updateField(['checkout', 'useContactLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Langsung WhatsApp</span><input value={content.checkout.directWhatsAppLabel || ''} onChange={(event) => updateField(['checkout', 'directWhatsAppLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Judul Form Checkout</span><input value={content.checkout.formTitle || ''} onChange={(event) => updateField(['checkout', 'formTitle'], event.target.value)} /></label>
+        <label className="admin-field"><span>Prefix Subject Order</span><input value={content.checkout.orderSubjectPrefix || ''} onChange={(event) => updateField(['checkout', 'orderSubjectPrefix'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Deskripsi Form Checkout</span><textarea value={content.checkout.formDescription || ''} onChange={(event) => updateField(['checkout', 'formDescription'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Tombol Submit Produk</span><input value={content.checkout.submitButtonLabel || ''} onChange={(event) => updateField(['checkout', 'submitButtonLabel'], event.target.value)} /></label>
+        <label className="admin-field"><span>Label Saat Mengirim</span><input value={content.checkout.submittingButtonLabel || ''} onChange={(event) => updateField(['checkout', 'submittingButtonLabel'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Pesan Sukses Order Produk</span><textarea value={content.checkout.successMessage || ''} onChange={(event) => updateField(['checkout', 'successMessage'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Pesan Gagal Order Produk</span><textarea value={content.checkout.errorMessage || ''} onChange={(event) => updateField(['checkout', 'errorMessage'], event.target.value)} /></label>
       </div>
+    </div>
+  );
 
-      <div className="admin-card">
-        {renderArrayHeader(
-          'Hero Stats',
-          'Atur metrik yang muncul di homepage.',
-          () => addArrayItem(['heroStats'], { value: '', label: '' }),
-          'Tambah Stat'
-        )}
-        <div className="admin-list">
-          {content.heroStats.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Value</span><input value={item.value || ''} onChange={(event) => updateArrayItem(['heroStats'], index, 'value', event.target.value)} /></label>
-                <label className="admin-field"><span>Label</span><input value={item.label || ''} onChange={(event) => updateArrayItem(['heroStats'], index, 'label', event.target.value)} /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['heroStats'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-card">
-        {renderArrayHeader(
-          'Fitur Homepage',
-          'Kelola fitur utama secara visual.',
-          () => addArrayItem(['features'], { icon: 'fa-star', title: '', description: '' }),
-          'Tambah Fitur'
-        )}
-        <div className="admin-list">
-          {content.features.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Icon</span><input value={item.icon || ''} onChange={(event) => updateArrayItem(['features'], index, 'icon', event.target.value)} /></label>
-                <label className="admin-field"><span>Judul</span><input value={item.title || ''} onChange={(event) => updateArrayItem(['features'], index, 'title', event.target.value)} /></label>
-                <label className="admin-field admin-field-full"><span>Deskripsi</span><textarea value={item.description || ''} onChange={(event) => updateArrayItem(['features'], index, 'description', event.target.value)} /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['features'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-card">
-        <div className="admin-card-head">
-          <h3>Flow Checkout</h3>
-        </div>
-        <div className="admin-grid-two">
-          <label className="admin-field">
-            <span>Mode Tombol Utama Produk</span>
-            <select value={content.checkout.primaryActionMode || 'checkout'} onChange={(event) => updateField(['checkout', 'primaryActionMode'], event.target.value)}>
-              <option value="checkout">Checkout</option>
-              <option value="contact">Kontak</option>
-              <option value="whatsapp">WhatsApp</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            <span>Login Wajib Sebelum Checkout Produk</span>
-            <select value={content.checkout.requireLoginBeforeCheckout ? 'yes' : 'no'} onChange={(event) => updateField(['checkout', 'requireLoginBeforeCheckout'], event.target.value === 'yes')}>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Saat Belum Login</span>
-            <input value={content.checkout.primaryActionLoggedOutLabel || ''} onChange={(event) => updateField(['checkout', 'primaryActionLoggedOutLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Saat Sudah Login</span>
-            <input value={content.checkout.primaryActionLoggedInLabel || ''} onChange={(event) => updateField(['checkout', 'primaryActionLoggedInLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Shortcut WhatsApp</span>
-            <select value={content.checkout.whatsappShortcutEnabled ? 'yes' : 'no'} onChange={(event) => updateField(['checkout', 'whatsappShortcutEnabled'], event.target.value === 'yes')}>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            <span>Label Shortcut WhatsApp</span>
-            <input value={content.checkout.whatsappShortcutLabel || ''} onChange={(event) => updateField(['checkout', 'whatsappShortcutLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Shortcut Form Kontak</span>
-            <select value={content.checkout.contactShortcutEnabled ? 'yes' : 'no'} onChange={(event) => updateField(['checkout', 'contactShortcutEnabled'], event.target.value === 'yes')}>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            <span>Label Shortcut Form Kontak</span>
-            <input value={content.checkout.contactShortcutLabel || ''} onChange={(event) => updateField(['checkout', 'contactShortcutLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Pesan Modal Auth</span>
-            <textarea value={content.checkout.authPromptText || ''} onChange={(event) => updateField(['checkout', 'authPromptText'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Eyebrow Checkout</span>
-            <input value={content.checkout.pageEyebrow || ''} onChange={(event) => updateField(['checkout', 'pageEyebrow'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Produk Terpilih</span>
-            <input value={content.checkout.packageLabel || ''} onChange={(event) => updateField(['checkout', 'packageLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Deskripsi Checkout</span>
-            <textarea value={content.checkout.pageDescription || ''} onChange={(event) => updateField(['checkout', 'pageDescription'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Judul Support Card</span>
-            <input value={content.checkout.supportCardTitle || ''} onChange={(event) => updateField(['checkout', 'supportCardTitle'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Support WhatsApp</span>
-            <input value={content.checkout.supportWhatsAppLabel || ''} onChange={(event) => updateField(['checkout', 'supportWhatsAppLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Support Kontak</span>
-            <input value={content.checkout.supportContactLabel || ''} onChange={(event) => updateField(['checkout', 'supportContactLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Deskripsi Support Card</span>
-            <textarea value={content.checkout.supportCardDescription || ''} onChange={(event) => updateField(['checkout', 'supportCardDescription'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Judul Not Found</span>
-            <input value={content.checkout.notFoundTitle || ''} onChange={(event) => updateField(['checkout', 'notFoundTitle'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Kembali ke Produk</span>
-            <input value={content.checkout.backToPackagesLabel || ''} onChange={(event) => updateField(['checkout', 'backToPackagesLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Deskripsi Not Found</span>
-            <textarea value={content.checkout.notFoundDescription || ''} onChange={(event) => updateField(['checkout', 'notFoundDescription'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Login</span>
-            <input value={content.checkout.loginButtonLabel || ''} onChange={(event) => updateField(['checkout', 'loginButtonLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Daftar</span>
-            <input value={content.checkout.registerButtonLabel || ''} onChange={(event) => updateField(['checkout', 'registerButtonLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Pakai Form Kontak</span>
-            <input value={content.checkout.useContactLabel || ''} onChange={(event) => updateField(['checkout', 'useContactLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Langsung WhatsApp</span>
-            <input value={content.checkout.directWhatsAppLabel || ''} onChange={(event) => updateField(['checkout', 'directWhatsAppLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Judul Form Checkout</span>
-            <input value={content.checkout.formTitle || ''} onChange={(event) => updateField(['checkout', 'formTitle'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Prefix Subject Order</span>
-            <input value={content.checkout.orderSubjectPrefix || ''} onChange={(event) => updateField(['checkout', 'orderSubjectPrefix'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Deskripsi Form Checkout</span>
-            <textarea value={content.checkout.formDescription || ''} onChange={(event) => updateField(['checkout', 'formDescription'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Tombol Submit Produk</span>
-            <input value={content.checkout.submitButtonLabel || ''} onChange={(event) => updateField(['checkout', 'submitButtonLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field">
-            <span>Label Saat Mengirim</span>
-            <input value={content.checkout.submittingButtonLabel || ''} onChange={(event) => updateField(['checkout', 'submittingButtonLabel'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Pesan Sukses Order Produk</span>
-            <textarea value={content.checkout.successMessage || ''} onChange={(event) => updateField(['checkout', 'successMessage'], event.target.value)} />
-          </label>
-          <label className="admin-field admin-field-full">
-            <span>Pesan Gagal Order Produk</span>
-            <textarea value={content.checkout.errorMessage || ''} onChange={(event) => updateField(['checkout', 'errorMessage'], event.target.value)} />
-          </label>
-        </div>
-      </div>
-
-      <div className="admin-card">
-        {renderArrayHeader(
-          'Field Form Checkout',
-          'Kelola field yang tampil di halaman checkout produk.',
-          () =>
+  const renderCheckoutFieldsPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-actions">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() =>
             addArrayItem(['checkout', 'fields'], {
               key: '',
               label: '',
@@ -575,121 +538,181 @@ const ContentStudio = ({ value, onChange, onSave, isSaving, mediaAssets = [] }) 
               placeholder: '',
               required: false,
               enabled: true
-            }),
-          'Tambah Field'
-        )}
-        <div className="admin-list">
-          {content.checkout.fields.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Key</span><input value={item.key || ''} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'key', event.target.value)} placeholder="contoh: instagram" /></label>
-                <label className="admin-field"><span>Label</span><input value={item.label || ''} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'label', event.target.value)} /></label>
-                <label className="admin-field">
-                  <span>Tipe</span>
-                  <select value={item.type || 'text'} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'type', event.target.value)}>
-                    <option value="text">Text</option>
-                    <option value="email">Email</option>
-                    <option value="tel">Tel</option>
-                    <option value="number">Number</option>
-                    <option value="date">Date</option>
-                    <option value="textarea">Textarea</option>
-                  </select>
-                </label>
-                <label className="admin-field">
-                  <span>Required</span>
-                  <select value={item.required ? 'yes' : 'no'} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'required', event.target.value === 'yes')}>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                </label>
-                <label className="admin-field">
-                  <span>Aktif</span>
-                  <select value={item.enabled ? 'yes' : 'no'} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'enabled', event.target.value === 'yes')}>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                </label>
-                <label className="admin-field admin-field-full"><span>Placeholder</span><input value={item.placeholder || ''} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'placeholder', event.target.value)} /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['checkout', 'fields'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-card">
-        {renderArrayHeader(
-          'Testimoni',
-          'Edit testimoni pengguna secara visual.',
-          () => addArrayItem(['testimonials'], { name: '', role: '', image: '💐', text: '' }),
-          'Tambah Testimoni'
-        )}
-        <div className="admin-list">
-          {content.testimonials.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Nama</span><input value={item.name || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'name', event.target.value)} /></label>
-                <label className="admin-field"><span>Role</span><input value={item.role || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'role', event.target.value)} /></label>
-                <label className="admin-field"><span>Emoji/Gambar</span><input value={item.image || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'image', event.target.value)} /></label>
-                <label className="admin-field admin-field-full"><span>Isi Testimoni</span><textarea value={item.text || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'text', event.target.value)} /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['testimonials'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-card">
-        <div className="admin-card-head">
-          <h3>Kontak & Footer</h3>
-        </div>
-        <div className="admin-grid-two">
-          <label className="admin-field"><span>Judul Kontak</span><input value={content.contact.title || ''} onChange={(event) => updateField(['contact', 'title'], event.target.value)} /></label>
-          <label className="admin-field"><span>Telepon</span><input value={content.contact.phone || ''} onChange={(event) => updateField(['contact', 'phone'], event.target.value)} /></label>
-          <label className="admin-field"><span>Email</span><input value={content.contact.email || ''} onChange={(event) => updateField(['contact', 'email'], event.target.value)} /></label>
-          <label className="admin-field"><span>Alamat</span><input value={content.contact.address || ''} onChange={(event) => updateField(['contact', 'address'], event.target.value)} /></label>
-          <label className="admin-field"><span>Jam Operasional</span><input value={content.contact.hours || ''} onChange={(event) => updateField(['contact', 'hours'], event.target.value)} /></label>
-          <label className="admin-field admin-field-full"><span>Deskripsi Kontak</span><textarea value={content.contact.description || ''} onChange={(event) => updateField(['contact', 'description'], event.target.value)} /></label>
-          <label className="admin-field admin-field-full"><span>Footer About</span><textarea value={content.footer.about || ''} onChange={(event) => updateField(['footer', 'about'], event.target.value)} /></label>
-        </div>
-      </div>
-
-      <div className="admin-card">
-        {renderArrayHeader('Social Kontak', null, () => addArrayItem(['contact', 'socials'], { platform: '', icon: 'fab fa-instagram', url: '' }), 'Tambah Social')}
-        <div className="admin-list">
-          {content.contact.socials.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Platform</span><input value={item.platform || ''} onChange={(event) => updateArrayItem(['contact', 'socials'], index, 'platform', event.target.value)} /></label>
-                <label className="admin-field"><span>Icon Class</span><input value={item.icon || ''} onChange={(event) => updateArrayItem(['contact', 'socials'], index, 'icon', event.target.value)} /></label>
-                <label className="admin-field admin-field-full"><span>URL</span><input value={item.url || ''} onChange={(event) => updateArrayItem(['contact', 'socials'], index, 'url', event.target.value)} /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['contact', 'socials'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-card">
-        {renderArrayHeader('Footer Links', null, () => addArrayItem(['footer', 'helpLinks'], { label: '', url: '' }), 'Tambah Link')}
-        <div className="admin-list">
-          {content.footer.helpLinks.map((item, index) => (
-            <div key={item.id || index} className="admin-card">
-              <div className="admin-grid-two">
-                <label className="admin-field"><span>Label</span><input value={item.label || ''} onChange={(event) => updateArrayItem(['footer', 'helpLinks'], index, 'label', event.target.value)} /></label>
-                <label className="admin-field"><span>URL</span><input value={item.url || ''} onChange={(event) => updateArrayItem(['footer', 'helpLinks'], index, 'url', event.target.value)} /></label>
-              </div>
-              <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['footer', 'helpLinks'], index)}>Hapus</button></div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="admin-actions admin-actions-sticky">
-        <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
-          {isSaving ? 'Menyimpan...' : 'Simpan Konten Visual'}
+            })
+          }
+        >
+          Tambah Field
         </button>
       </div>
+      <div className="admin-list">
+        {content.checkout.fields.map((item, index) => (
+          <div key={item.id || index} className="admin-card">
+            <div className="admin-grid-two">
+              <label className="admin-field"><span>Key</span><input value={item.key || ''} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'key', event.target.value)} placeholder="contoh: instagram" /></label>
+              <label className="admin-field"><span>Label</span><input value={item.label || ''} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'label', event.target.value)} /></label>
+              <label className="admin-field"><span>Tipe</span><select value={item.type || 'text'} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'type', event.target.value)}><option value="text">Text</option><option value="email">Email</option><option value="tel">Tel</option><option value="number">Number</option><option value="date">Date</option><option value="textarea">Textarea</option></select></label>
+              <label className="admin-field"><span>Required</span><select value={item.required ? 'yes' : 'no'} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'required', event.target.value === 'yes')}><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label className="admin-field"><span>Aktif</span><select value={item.enabled ? 'yes' : 'no'} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'enabled', event.target.value === 'yes')}><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label className="admin-field admin-field-full"><span>Placeholder</span><input value={item.placeholder || ''} onChange={(event) => updateArrayItem(['checkout', 'fields'], index, 'placeholder', event.target.value)} /></label>
+            </div>
+            <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['checkout', 'fields'], index)}>Hapus</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderTestimonialsPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-actions">
+        <button type="button" className="btn-secondary" onClick={() => addArrayItem(['testimonials'], { name: '', role: '', image: '💐', text: '' })}>
+          Tambah Testimoni
+        </button>
+      </div>
+      <div className="admin-list">
+        {content.testimonials.map((item, index) => (
+          <div key={item.id || index} className="admin-card">
+            <div className="admin-grid-two">
+              <label className="admin-field"><span>Nama</span><input value={item.name || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'name', event.target.value)} /></label>
+              <label className="admin-field"><span>Role</span><input value={item.role || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'role', event.target.value)} /></label>
+              <label className="admin-field"><span>Emoji/Gambar</span><input value={item.image || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'image', event.target.value)} /></label>
+              <label className="admin-field admin-field-full"><span>Isi Testimoni</span><textarea value={item.text || ''} onChange={(event) => updateArrayItem(['testimonials'], index, 'text', event.target.value)} /></label>
+            </div>
+            <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['testimonials'], index)}>Hapus</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderContactPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-detail-grid">
+        <label className="admin-field"><span>Judul Kontak</span><input value={content.contact.title || ''} onChange={(event) => updateField(['contact', 'title'], event.target.value)} /></label>
+        <label className="admin-field"><span>Telepon</span><input value={content.contact.phone || ''} onChange={(event) => updateField(['contact', 'phone'], event.target.value)} /></label>
+        <label className="admin-field"><span>Email</span><input value={content.contact.email || ''} onChange={(event) => updateField(['contact', 'email'], event.target.value)} /></label>
+        <label className="admin-field"><span>Alamat</span><input value={content.contact.address || ''} onChange={(event) => updateField(['contact', 'address'], event.target.value)} /></label>
+        <label className="admin-field"><span>Jam Operasional</span><input value={content.contact.hours || ''} onChange={(event) => updateField(['contact', 'hours'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Deskripsi Kontak</span><textarea value={content.contact.description || ''} onChange={(event) => updateField(['contact', 'description'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Footer About</span><textarea value={content.footer.about || ''} onChange={(event) => updateField(['footer', 'about'], event.target.value)} /></label>
+      </div>
+    </div>
+  );
+
+  const renderContactSocialsPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-actions">
+        <button type="button" className="btn-secondary" onClick={() => addArrayItem(['contact', 'socials'], { platform: '', icon: 'fab fa-instagram', url: '' })}>
+          Tambah Social
+        </button>
+      </div>
+      <div className="admin-list">
+        {content.contact.socials.map((item, index) => (
+          <div key={item.id || index} className="admin-card">
+            <div className="admin-grid-two">
+              <label className="admin-field"><span>Platform</span><input value={item.platform || ''} onChange={(event) => updateArrayItem(['contact', 'socials'], index, 'platform', event.target.value)} /></label>
+              <label className="admin-field"><span>Icon Class</span><input value={item.icon || ''} onChange={(event) => updateArrayItem(['contact', 'socials'], index, 'icon', event.target.value)} /></label>
+              <label className="admin-field admin-field-full"><span>URL</span><input value={item.url || ''} onChange={(event) => updateArrayItem(['contact', 'socials'], index, 'url', event.target.value)} /></label>
+            </div>
+            <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['contact', 'socials'], index)}>Hapus</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderFooterLinksPanel = () => (
+    <div className="admin-overlay-stack">
+      <div className="admin-actions">
+        <button type="button" className="btn-secondary" onClick={() => addArrayItem(['footer', 'helpLinks'], { label: '', url: '' })}>
+          Tambah Link
+        </button>
+      </div>
+      <div className="admin-list">
+        {content.footer.helpLinks.map((item, index) => (
+          <div key={item.id || index} className="admin-card">
+            <div className="admin-grid-two">
+              <label className="admin-field"><span>Label</span><input value={item.label || ''} onChange={(event) => updateArrayItem(['footer', 'helpLinks'], index, 'label', event.target.value)} /></label>
+              <label className="admin-field"><span>URL</span><input value={item.url || ''} onChange={(event) => updateArrayItem(['footer', 'helpLinks'], index, 'url', event.target.value)} /></label>
+            </div>
+            <div className="admin-actions"><button type="button" className="btn-secondary" onClick={() => removeArrayItem(['footer', 'helpLinks'], index)}>Hapus</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderActivePanelContent = () => {
+    switch (activePanel) {
+      case 'branding':
+        return renderBrandingPanel();
+      case 'hero':
+        return renderHeroPanel();
+      case 'heroStats':
+        return renderHeroStatsPanel();
+      case 'features':
+        return renderFeaturesPanel();
+      case 'checkout':
+        return renderCheckoutPanel();
+      case 'checkoutFields':
+        return renderCheckoutFieldsPanel();
+      case 'testimonials':
+        return renderTestimonialsPanel();
+      case 'contact':
+        return renderContactPanel();
+      case 'contactSocials':
+        return renderContactSocialsPanel();
+      case 'footerLinks':
+        return renderFooterLinksPanel();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="content-studio">
+      <div className="admin-card admin-card-highlight">
+        <div className="admin-card-head">
+          <div>
+            <h3>Media Workflow</h3>
+            <p>Upload gambar ke tab Media atau pakai drag-and-drop pada section branding dan hero. Semua form utama sekarang dibuka sebagai panel overlay di depan halaman ini.</p>
+          </div>
+          <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
+            {isSaving ? 'Menyimpan...' : 'Simpan Storefront'}
+          </button>
+        </div>
+        {renderQuickMediaLibrary()}
+      </div>
+
+      <div className="admin-section-launcher-grid">
+        {sectionLaunchers.map((section) => (
+          <button key={section.id} type="button" className="admin-section-launcher" onClick={() => setActivePanel(section.id)}>
+            <span className="admin-page-label">Storefront</span>
+            <strong>{section.title}</strong>
+            <p>{section.description}</p>
+          </button>
+        ))}
+      </div>
+
+      <AdminOverlayForm
+        isOpen={Boolean(activePanel)}
+        tag="Storefront"
+        title={panelMeta.title}
+        description={panelMeta.description}
+        onClose={() => setActivePanel('')}
+        actions={
+          <>
+            <button type="button" className="btn-secondary" onClick={() => setActivePanel('')}>
+              Tutup
+            </button>
+            <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
+              {isSaving ? 'Menyimpan...' : 'Simpan Storefront'}
+            </button>
+          </>
+        }
+      >
+        {renderActivePanelContent()}
+      </AdminOverlayForm>
     </div>
   );
 };

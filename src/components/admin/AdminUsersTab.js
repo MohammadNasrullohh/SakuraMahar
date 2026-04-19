@@ -1,17 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminSheetTable from './AdminSheetTable';
+import AdminOverlayForm from './AdminOverlayForm';
 import { exportRowsToCsv, stringifyForSearch } from './adminUtils';
+
+const cloneItem = (item) => JSON.parse(JSON.stringify(item || null));
 
 const AdminUsersTab = ({
   users,
   filters,
   setFilter,
   currentUserEmail,
-  updateListItem,
   saveUser,
   removeUser
 }) => {
   const [selectedId, setSelectedId] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [draftUser, setDraftUser] = useState(null);
 
   const filteredUsers = useMemo(
     () =>
@@ -36,6 +40,16 @@ const AdminUsersTab = ({
   }, [filteredUsers, selectedId]);
 
   const selectedUser = filteredUsers.find((item) => String(item.id) === String(selectedId)) || null;
+
+  const openEditor = (targetUser) => {
+    if (!targetUser) {
+      return;
+    }
+
+    setSelectedId(targetUser.id);
+    setDraftUser(cloneItem(targetUser));
+    setIsEditorOpen(true);
+  };
 
   const columns = [
     {
@@ -114,80 +128,88 @@ const AdminUsersTab = ({
         </button>
       </div>
 
-      <div className="admin-sheet-layout">
-        <section className="admin-sheet-card">
-          <div className="admin-sheet-titlebar">
-            <div>
-              <h3>Daftar User</h3>
-              <p>{filteredUsers.length} akun tersedia.</p>
-            </div>
+      <section className="admin-sheet-card">
+        <div className="admin-sheet-titlebar">
+          <div>
+            <h3>Daftar User</h3>
+            <p>{filteredUsers.length} akun tersedia. Klik baris untuk membuka form edit di atas halaman ini.</p>
           </div>
-          <AdminSheetTable
-            columns={columns}
-            rows={filteredUsers}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            emptyMessage="Belum ada user yang cocok dengan filter."
-          />
-        </section>
-
-        <aside className="admin-sheet-card admin-sheet-detail">
           {selectedUser ? (
+            <button type="button" className="btn-primary" onClick={() => openEditor(selectedUser)}>
+              Edit User
+            </button>
+          ) : null}
+        </div>
+        <AdminSheetTable
+          columns={columns}
+          rows={filteredUsers}
+          selectedId={selectedId}
+          onSelect={(id) => {
+            const nextSelectedUser = filteredUsers.find((item) => String(item.id) === String(id));
+            setSelectedId(id);
+            openEditor(nextSelectedUser);
+          }}
+          emptyMessage="Belum ada user yang cocok dengan filter."
+        />
+      </section>
+
+      <AdminOverlayForm
+        isOpen={isEditorOpen && Boolean(draftUser)}
+        tag="Users"
+        title={draftUser?.nama || draftUser?.email || 'Edit User'}
+        description={draftUser?.email || 'Atur identitas, role, dan status user.'}
+        onClose={() => setIsEditorOpen(false)}
+        actions={
+          draftUser ? (
             <>
-              <div className="admin-sheet-titlebar">
-                <div>
-                  <h3>{selectedUser.nama || selectedUser.email}</h3>
-                  <p>{selectedUser.email}</p>
-                </div>
-                <div className="admin-actions">
-                  <span className={`admin-tag ${selectedUser.role}`}>{selectedUser.role}</span>
-                  <span className={`admin-tag ${selectedUser.status || 'active'}`}>{selectedUser.status || 'active'}</span>
-                </div>
-              </div>
-
-              <div className="admin-detail-grid">
-                <label className="admin-field">
-                  <span>Nama</span>
-                  <input value={selectedUser.nama || ''} onChange={(event) => updateListItem(selectedUser.id, 'nama', event.target.value)} />
-                </label>
-                <label className="admin-field">
-                  <span>Email</span>
-                  <input value={selectedUser.email || ''} onChange={(event) => updateListItem(selectedUser.id, 'email', event.target.value)} />
-                </label>
-                <label className="admin-field">
-                  <span>Telepon</span>
-                  <input value={selectedUser.noTelepon || ''} onChange={(event) => updateListItem(selectedUser.id, 'noTelepon', event.target.value)} />
-                </label>
-                <label className="admin-field">
-                  <span>Role</span>
-                  <select value={selectedUser.role} onChange={(event) => updateListItem(selectedUser.id, 'role', event.target.value)}>
-                    <option value="user">user</option>
-                    <option value="admin">admin</option>
-                  </select>
-                </label>
-                <label className="admin-field">
-                  <span>Status</span>
-                  <select value={selectedUser.status || 'active'} onChange={(event) => updateListItem(selectedUser.id, 'status', event.target.value)}>
-                    <option value="active">active</option>
-                    <option value="inactive">inactive</option>
-                  </select>
-                </label>
-                <label className="admin-field admin-field-full">
-                  <span>Catatan</span>
-                  <textarea value={selectedUser.notes || ''} onChange={(event) => updateListItem(selectedUser.id, 'notes', event.target.value)} />
-                </label>
-              </div>
-
-              <div className="admin-actions">
-                <button type="button" className="btn-primary" onClick={() => saveUser(selectedUser)}>Simpan User</button>
-                <button type="button" className="btn-secondary" onClick={() => removeUser(selectedUser)} disabled={selectedUser.email === currentUserEmail}>Hapus</button>
-              </div>
+              <button type="button" className="btn-secondary" onClick={() => setIsEditorOpen(false)}>
+                Tutup
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => { removeUser(draftUser); setIsEditorOpen(false); }} disabled={draftUser.email === currentUserEmail}>
+                Hapus
+              </button>
+              <button type="button" className="btn-primary" onClick={() => { saveUser(draftUser); setIsEditorOpen(false); }}>
+                Simpan User
+              </button>
             </>
-          ) : (
-            <div className="admin-empty">Pilih user dari tabel untuk melihat detail dan melakukan edit.</div>
-          )}
-        </aside>
-      </div>
+          ) : null
+        }
+      >
+        {draftUser ? (
+          <div className="admin-detail-grid">
+            <label className="admin-field">
+              <span>Nama</span>
+              <input value={draftUser.nama || ''} onChange={(event) => setDraftUser((current) => ({ ...current, nama: event.target.value }))} />
+            </label>
+            <label className="admin-field">
+              <span>Email</span>
+              <input value={draftUser.email || ''} onChange={(event) => setDraftUser((current) => ({ ...current, email: event.target.value }))} />
+            </label>
+            <label className="admin-field">
+              <span>Telepon</span>
+              <input value={draftUser.noTelepon || ''} onChange={(event) => setDraftUser((current) => ({ ...current, noTelepon: event.target.value }))} />
+            </label>
+            <label className="admin-field">
+              <span>Role</span>
+              <select value={draftUser.role} onChange={(event) => setDraftUser((current) => ({ ...current, role: event.target.value }))}>
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </label>
+            <label className="admin-field">
+              <span>Status</span>
+              <select value={draftUser.status || 'active'} onChange={(event) => setDraftUser((current) => ({ ...current, status: event.target.value }))}>
+                <option value="active">active</option>
+                <option value="inactive">inactive</option>
+              </select>
+            </label>
+            <label className="admin-field admin-field-full">
+              <span>Catatan</span>
+              <textarea value={draftUser.notes || ''} onChange={(event) => setDraftUser((current) => ({ ...current, notes: event.target.value }))} />
+            </label>
+          </div>
+        ) : null}
+      </AdminOverlayForm>
     </>
   );
 };

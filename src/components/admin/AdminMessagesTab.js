@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminSheetTable from './AdminSheetTable';
+import AdminOverlayForm from './AdminOverlayForm';
 import { exportRowsToCsv, formatDateTime, stringifyForSearch } from './adminUtils';
 
-const AdminMessagesTab = ({ messages, filters, setFilter, updateListItem, saveMessageResponse, removeMessage }) => {
+const cloneItem = (item) => JSON.parse(JSON.stringify(item || null));
+
+const AdminMessagesTab = ({ messages, filters, setFilter, saveMessageResponse, removeMessage }) => {
   const [selectedId, setSelectedId] = useState(null);
+  const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [draftMessage, setDraftMessage] = useState(null);
 
   const filteredMessages = useMemo(
     () =>
@@ -27,6 +32,16 @@ const AdminMessagesTab = ({ messages, filters, setFilter, updateListItem, saveMe
   }, [filteredMessages, selectedId]);
 
   const selectedMessage = filteredMessages.find((item) => String(item.id) === String(selectedId)) || null;
+
+  const openReplyForm = (targetMessage) => {
+    if (!targetMessage) {
+      return;
+    }
+
+    setSelectedId(targetMessage.id);
+    setDraftMessage(cloneItem(targetMessage));
+    setIsReplyOpen(true);
+  };
 
   const columns = [
     {
@@ -81,61 +96,72 @@ const AdminMessagesTab = ({ messages, filters, setFilter, updateListItem, saveMe
         <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('messages.csv', filteredMessages.map((item) => ({ id: item.id, nama: item.nama, email: item.email, subjek: item.subjek, status: item.status })))}>Unduh CSV</button>
       </div>
 
-      <div className="admin-sheet-layout">
-        <section className="admin-sheet-card">
-          <div className="admin-sheet-titlebar">
-            <div>
-              <h3>Inbox Pesan</h3>
-              <p>{filteredMessages.length} pesan siap dibaca.</p>
-            </div>
+      <section className="admin-sheet-card">
+        <div className="admin-sheet-titlebar">
+          <div>
+            <h3>Inbox Pesan</h3>
+            <p>{filteredMessages.length} pesan siap dibaca. Klik pesan untuk membuka balasan di atas halaman ini.</p>
           </div>
-          <AdminSheetTable
-            columns={columns}
-            rows={filteredMessages}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            emptyMessage="Belum ada pesan yang cocok dengan filter."
-          />
-        </section>
-
-        <aside className="admin-sheet-card admin-sheet-detail">
           {selectedMessage ? (
+            <button type="button" className="btn-primary" onClick={() => openReplyForm(selectedMessage)}>
+              Balas Pesan
+            </button>
+          ) : null}
+        </div>
+        <AdminSheetTable
+          columns={columns}
+          rows={filteredMessages}
+          selectedId={selectedId}
+          onSelect={(id) => {
+            const nextMessage = filteredMessages.find((item) => String(item.id) === String(id));
+            setSelectedId(id);
+            openReplyForm(nextMessage);
+          }}
+          emptyMessage="Belum ada pesan yang cocok dengan filter."
+        />
+      </section>
+
+      <AdminOverlayForm
+        isOpen={isReplyOpen && Boolean(draftMessage)}
+        tag="Pesan"
+        title={draftMessage?.nama || 'Balas Pesan'}
+        description={draftMessage ? `${draftMessage.email || '-'} · ${formatDateTime(draftMessage.createdAt)}` : ''}
+        onClose={() => setIsReplyOpen(false)}
+        actions={
+          draftMessage ? (
             <>
-              <div className="admin-sheet-titlebar">
-                <div>
-                  <h3>{selectedMessage.nama || '-'}</h3>
-                  <p>{selectedMessage.email || '-'} · {formatDateTime(selectedMessage.createdAt)}</p>
-                </div>
-                <span className={`admin-tag ${selectedMessage.status}`}>{selectedMessage.status}</span>
-              </div>
-
-              <div className="admin-sheet-section">
-                <h4>Subjek</h4>
-                <p className="admin-message-body">{selectedMessage.subjek || '-'}</p>
-              </div>
-
-              <div className="admin-sheet-section">
-                <h4>Pesan Masuk</h4>
-                <p className="admin-message-body">{selectedMessage.pesan || '-'}</p>
-              </div>
-
-              <div className="admin-detail-grid">
-                <label className="admin-field admin-field-full">
-                  <span>Balasan</span>
-                  <textarea value={selectedMessage.response || ''} onChange={(event) => updateListItem(selectedMessage.id, 'response', event.target.value)} />
-                </label>
-              </div>
-
-              <div className="admin-actions">
-                <button type="button" className="btn-primary" onClick={() => saveMessageResponse(selectedMessage)}>Kirim Balasan</button>
-                <button type="button" className="btn-secondary" onClick={() => removeMessage(selectedMessage.id)}>Hapus</button>
-              </div>
+              <button type="button" className="btn-secondary" onClick={() => setIsReplyOpen(false)}>
+                Tutup
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => { removeMessage(draftMessage.id); setIsReplyOpen(false); }}>
+                Hapus
+              </button>
+              <button type="button" className="btn-primary" onClick={() => { saveMessageResponse(draftMessage); setIsReplyOpen(false); }}>
+                Kirim Balasan
+              </button>
             </>
-          ) : (
-            <div className="admin-empty">Pilih pesan dari tabel untuk membaca isi lengkap dan membalasnya.</div>
-          )}
-        </aside>
-      </div>
+          ) : null
+        }
+      >
+        {draftMessage ? (
+          <div className="admin-overlay-stack">
+            <div className="admin-sheet-section">
+              <h4>Subjek</h4>
+              <p className="admin-message-body">{draftMessage.subjek || '-'}</p>
+            </div>
+
+            <div className="admin-sheet-section">
+              <h4>Pesan Masuk</h4>
+              <p className="admin-message-body">{draftMessage.pesan || '-'}</p>
+            </div>
+
+            <label className="admin-field">
+              <span>Balasan</span>
+              <textarea value={draftMessage.response || ''} onChange={(event) => setDraftMessage((current) => ({ ...current, response: event.target.value }))} />
+            </label>
+          </div>
+        ) : null}
+      </AdminOverlayForm>
     </>
   );
 };

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminSheetTable from './AdminSheetTable';
+import AdminOverlayForm from './AdminOverlayForm';
 import { exportRowsToCsv, formatDateTime, stringifyForSearch } from './adminUtils';
+
+const cloneItem = (item) => JSON.parse(JSON.stringify(item || null));
 
 const getOrderFieldValue = (order, keys = []) => {
   const safeKeys = Array.isArray(keys) ? keys.map((key) => String(key || '').trim()) : [];
@@ -25,8 +28,10 @@ const buildGoogleMapsSearchUrl = (query = '') => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedQuery)}`;
 };
 
-const AdminOrdersTab = ({ orders, filters, setFilter, updateListItem, saveOrder, removeOrder }) => {
+const AdminOrdersTab = ({ orders, filters, setFilter, saveOrder, removeOrder }) => {
   const [selectedId, setSelectedId] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [draftOrder, setDraftOrder] = useState(null);
 
   const filteredOrders = useMemo(
     () =>
@@ -51,6 +56,16 @@ const AdminOrdersTab = ({ orders, filters, setFilter, updateListItem, saveOrder,
   }, [filteredOrders, selectedId]);
 
   const selectedOrder = filteredOrders.find((item) => String(item.id) === String(selectedId)) || null;
+
+  const openEditor = (targetOrder) => {
+    if (!targetOrder) {
+      return;
+    }
+
+    setSelectedId(targetOrder.id);
+    setDraftOrder(cloneItem(targetOrder));
+    setIsEditorOpen(true);
+  };
 
   const columns = [
     {
@@ -147,114 +162,124 @@ const AdminOrdersTab = ({ orders, filters, setFilter, updateListItem, saveOrder,
         </button>
       </div>
 
-      <div className="admin-sheet-layout">
-        <section className="admin-sheet-card">
-          <div className="admin-sheet-titlebar">
-            <div>
-              <h3>Daftar Order</h3>
-              <p>{filteredOrders.length} order siap diproses.</p>
+      <section className="admin-sheet-card">
+        <div className="admin-sheet-titlebar">
+          <div>
+            <h3>Daftar Order</h3>
+            <p>{filteredOrders.length} order siap diproses. Klik order untuk membuka form tindak lanjut di atas halaman ini.</p>
+          </div>
+          {selectedOrder ? (
+            <button type="button" className="btn-primary" onClick={() => openEditor(selectedOrder)}>
+              Tindak Lanjut
+            </button>
+          ) : null}
+        </div>
+        <AdminSheetTable
+          columns={columns}
+          rows={filteredOrders}
+          selectedId={selectedId}
+          onSelect={(id) => {
+            const nextOrder = filteredOrders.find((item) => String(item.id) === String(id));
+            setSelectedId(id);
+            openEditor(nextOrder);
+          }}
+          emptyMessage="Belum ada order yang cocok dengan filter."
+        />
+      </section>
+
+      <AdminOverlayForm
+        isOpen={isEditorOpen && Boolean(draftOrder)}
+        tag="Orders"
+        title={draftOrder?.orderCode || `Order #${draftOrder?.id || ''}`}
+        description={draftOrder ? [draftOrder.productName || draftOrder.packageName, draftOrder.productCategory, draftOrder.productPrice || draftOrder.packagePrice].filter(Boolean).join(' · ') : ''}
+        onClose={() => setIsEditorOpen(false)}
+        actions={
+          draftOrder ? (
+            <>
+              <button type="button" className="btn-secondary" onClick={() => setIsEditorOpen(false)}>
+                Tutup
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => { removeOrder(draftOrder.id); setIsEditorOpen(false); }}>
+                Hapus
+              </button>
+              <button type="button" className="btn-primary" onClick={() => { saveOrder(draftOrder); setIsEditorOpen(false); }}>
+                Simpan Order
+              </button>
+            </>
+          ) : null
+        }
+      >
+        {draftOrder ? (
+          <div className="admin-overlay-stack">
+            <div className="admin-meta-list admin-meta-list-compact">
+              <div><strong>Customer</strong><span>{draftOrder.customerName || '-'}</span></div>
+              <div><strong>Email</strong><span>{draftOrder.customerEmail || '-'}</span></div>
+              <div><strong>Telepon</strong><span>{draftOrder.customerPhone || '-'}</span></div>
+              <div><strong>Produk</strong><span>{draftOrder.productName || draftOrder.packageName || '-'}</span></div>
+              <div><strong>Dibuat</strong><span>{formatDateTime(draftOrder.createdAt)}</span></div>
+              <div><strong>Diupdate</strong><span>{formatDateTime(draftOrder.updatedAt)}</span></div>
+            </div>
+
+            {draftOrder.customerNotes ? (
+              <div className="admin-sheet-section">
+                <h4>Catatan Customer</h4>
+                <p className="admin-message-body">{draftOrder.customerNotes}</p>
+              </div>
+            ) : null}
+
+            {Array.isArray(draftOrder.fieldSnapshot) && draftOrder.fieldSnapshot.length ? (
+              <div className="admin-sheet-section">
+                <h4>Field Checkout</h4>
+                <div className="admin-order-field-list">
+                  {draftOrder.fieldSnapshot.map((field) => (
+                    <div key={`${draftOrder.id}-${field.key}`} className="admin-order-field-item">
+                      <strong>{field.label}</strong>
+                      {/maps/i.test(String(field.key || '')) && field.value ? (
+                        <a href={/^https?:\/\//i.test(field.value) ? field.value : buildGoogleMapsSearchUrl(field.value)} target="_blank" rel="noreferrer">
+                          Buka Google Maps
+                        </a>
+                      ) : /address|alamat/i.test(String(field.key || '')) && field.value ? (
+                        <a href={buildGoogleMapsSearchUrl(field.value)} target="_blank" rel="noreferrer">
+                          {field.value}
+                        </a>
+                      ) : (
+                        <span>{field.value || '-'}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="admin-detail-grid">
+              <label className="admin-field">
+                <span>Status</span>
+                <select value={draftOrder.status || 'new'} onChange={(event) => setDraftOrder((current) => ({ ...current, status: event.target.value }))}>
+                  <option value="new">new</option>
+                  <option value="reviewing">reviewing</option>
+                  <option value="contacted">contacted</option>
+                  <option value="confirmed">confirmed</option>
+                  <option value="completed">completed</option>
+                  <option value="cancelled">cancelled</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Prioritas</span>
+                <select value={draftOrder.priority || 'normal'} onChange={(event) => setDraftOrder((current) => ({ ...current, priority: event.target.value }))}>
+                  <option value="low">low</option>
+                  <option value="normal">normal</option>
+                  <option value="high">high</option>
+                  <option value="urgent">urgent</option>
+                </select>
+              </label>
+              <label className="admin-field admin-field-full">
+                <span>Catatan Admin</span>
+                <textarea value={draftOrder.adminNotes || ''} onChange={(event) => setDraftOrder((current) => ({ ...current, adminNotes: event.target.value }))} />
+              </label>
             </div>
           </div>
-          <AdminSheetTable
-            columns={columns}
-            rows={filteredOrders}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            emptyMessage="Belum ada order yang cocok dengan filter."
-          />
-        </section>
-
-        <aside className="admin-sheet-card admin-sheet-detail">
-          {selectedOrder ? (
-            <>
-              <div className="admin-sheet-titlebar">
-                <div>
-                  <h3>{selectedOrder.orderCode || `Order #${selectedOrder.id}`}</h3>
-                  <p>{[selectedOrder.productName || selectedOrder.packageName, selectedOrder.productCategory, selectedOrder.productPrice || selectedOrder.packagePrice].filter(Boolean).join(' · ')}</p>
-                </div>
-                <div className="admin-actions">
-                  <span className={`admin-tag ${selectedOrder.status}`}>{selectedOrder.status}</span>
-                  <span className="admin-tag">{selectedOrder.priority || 'normal'}</span>
-                </div>
-              </div>
-
-              <div className="admin-meta-list admin-meta-list-compact">
-                <div><strong>Customer</strong><span>{selectedOrder.customerName || '-'}</span></div>
-                <div><strong>Email</strong><span>{selectedOrder.customerEmail || '-'}</span></div>
-                <div><strong>Telepon</strong><span>{selectedOrder.customerPhone || '-'}</span></div>
-                <div><strong>Produk</strong><span>{selectedOrder.productName || selectedOrder.packageName || '-'}</span></div>
-                <div><strong>Dibuat</strong><span>{formatDateTime(selectedOrder.createdAt)}</span></div>
-                <div><strong>Diupdate</strong><span>{formatDateTime(selectedOrder.updatedAt)}</span></div>
-              </div>
-
-              {selectedOrder.customerNotes ? (
-                <div className="admin-sheet-section">
-                  <h4>Catatan Customer</h4>
-                  <p className="admin-message-body">{selectedOrder.customerNotes}</p>
-                </div>
-              ) : null}
-
-              {Array.isArray(selectedOrder.fieldSnapshot) && selectedOrder.fieldSnapshot.length ? (
-                <div className="admin-sheet-section">
-                  <h4>Field Checkout</h4>
-                  <div className="admin-order-field-list">
-                    {selectedOrder.fieldSnapshot.map((field) => (
-                      <div key={`${selectedOrder.id}-${field.key}`} className="admin-order-field-item">
-                        <strong>{field.label}</strong>
-                        {/maps/i.test(String(field.key || '')) && field.value ? (
-                          <a href={/^https?:\/\//i.test(field.value) ? field.value : buildGoogleMapsSearchUrl(field.value)} target="_blank" rel="noreferrer">
-                            Buka Google Maps
-                          </a>
-                        ) : /address|alamat/i.test(String(field.key || '')) && field.value ? (
-                          <a href={buildGoogleMapsSearchUrl(field.value)} target="_blank" rel="noreferrer">
-                            {field.value}
-                          </a>
-                        ) : (
-                          <span>{field.value || '-'}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="admin-detail-grid">
-                <label className="admin-field">
-                  <span>Status</span>
-                  <select value={selectedOrder.status || 'new'} onChange={(event) => updateListItem(selectedOrder.id, 'status', event.target.value)}>
-                    <option value="new">new</option>
-                    <option value="reviewing">reviewing</option>
-                    <option value="contacted">contacted</option>
-                    <option value="confirmed">confirmed</option>
-                    <option value="completed">completed</option>
-                    <option value="cancelled">cancelled</option>
-                  </select>
-                </label>
-                <label className="admin-field">
-                  <span>Prioritas</span>
-                  <select value={selectedOrder.priority || 'normal'} onChange={(event) => updateListItem(selectedOrder.id, 'priority', event.target.value)}>
-                    <option value="low">low</option>
-                    <option value="normal">normal</option>
-                    <option value="high">high</option>
-                    <option value="urgent">urgent</option>
-                  </select>
-                </label>
-                <label className="admin-field admin-field-full">
-                  <span>Catatan Admin</span>
-                  <textarea value={selectedOrder.adminNotes || ''} onChange={(event) => updateListItem(selectedOrder.id, 'adminNotes', event.target.value)} />
-                </label>
-              </div>
-
-              <div className="admin-actions">
-                <button type="button" className="btn-primary" onClick={() => saveOrder(selectedOrder)}>Simpan Order</button>
-                <button type="button" className="btn-secondary" onClick={() => removeOrder(selectedOrder.id)}>Hapus</button>
-              </div>
-            </>
-          ) : (
-            <div className="admin-empty">Pilih order dari tabel untuk melihat detail dan follow-up.</div>
-          )}
-        </aside>
-      </div>
+        ) : null}
+      </AdminOverlayForm>
     </>
   );
 };

@@ -489,7 +489,7 @@ const AdminPanel = ({
   const saveOrder = async (item) => { try { const response = await updateOrder(item.id, { status: item.status, priority: item.priority, adminNotes: item.adminNotes || '' }); setOrders((current) => current.map((currentItem) => (currentItem.id === item.id ? response.order : currentItem))); await syncAfterMutation(); setSuccess(`Order ${response.order.orderCode} berhasil diperbarui.`); } catch (error) { setError(error.message || 'Order gagal diperbarui.'); } };
   const removeOrder = async (id) => { try { await deleteOrder(id); setOrders((current) => current.filter((item) => item.id !== id)); await syncAfterMutation(); setSuccess(`Order #${id} dihapus.`); } catch (error) { setError(error.message || 'Order gagal dihapus.'); } };
 
-  const handleMediaUpload = async (incomingFiles = null) => {
+  const handleMediaUpload = async (incomingFiles = null, folderOverride = '') => {
     const pendingFiles = Array.isArray(incomingFiles)
       ? incomingFiles.filter(Boolean)
       : incomingFiles
@@ -497,18 +497,19 @@ const AdminPanel = ({
         : uploadDraft.file
           ? [uploadDraft.file]
           : [];
+    const targetFolder = folderOverride || uploadDraft.folder;
 
     if (!pendingFiles.length) {
       setError('Pilih file media terlebih dahulu.');
-      return;
+      return [];
     }
 
-    setUploadDraft((current) => ({ ...current, file: pendingFiles[0], isUploading: true }));
+    setUploadDraft((current) => ({ ...current, folder: targetFolder, file: pendingFiles[0], isUploading: true }));
     try {
       const uploadedAssets = [];
 
       for (const file of pendingFiles) {
-        const response = await uploadMediaAsset(file, uploadDraft.folder);
+        const response = await uploadMediaAsset(file, targetFolder);
         uploadedAssets.push(response.asset);
       }
 
@@ -517,9 +518,11 @@ const AdminPanel = ({
       await refreshMediaData();
       await syncAfterMutation();
       setSuccess(pendingFiles.length > 1 ? `${pendingFiles.length} media berhasil diunggah.` : 'Media berhasil diunggah.');
+      return uploadedAssets;
     } catch (error) {
       setUploadDraft((current) => ({ ...current, isUploading: false }));
       setError(error.message || 'Media gagal diunggah.');
+      return [];
     }
   };
 
@@ -721,7 +724,7 @@ const AdminPanel = ({
       case 'overview':
         return renderOverviewTab();
       case 'content':
-        return <ContentStudio value={contentForm} onChange={setContentForm} onSave={saveContent} isSaving={isSaving} mediaAssets={mediaAssets} />;
+        return <ContentStudio value={contentForm} onChange={setContentForm} onSave={saveContent} isSaving={isSaving} mediaAssets={mediaAssets} onUploadImages={handleMediaUpload} uploadDraft={uploadDraft} />;
       case 'products':
         return (
           <AdminProductsTab
@@ -730,6 +733,8 @@ const AdminPanel = ({
             onSave={saveContent}
             isSaving={isSaving}
             mediaAssets={mediaAssets}
+            onUploadImages={handleMediaUpload}
+            uploadDraft={uploadDraft}
           />
         );
       case 'users':
