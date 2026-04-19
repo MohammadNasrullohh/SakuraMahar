@@ -1895,6 +1895,23 @@
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
+.admin-branding-helper {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e6ebf4;
+  color: #607087;
+  line-height: 1.7;
+}
+
+.admin-branding-preview-grid {
+  align-items: start;
+}
+
+.admin-branding-card {
+  gap: 16px;
+}
+
 .branding-preview-card small {
   font-size: 12px;
   font-weight: 700;

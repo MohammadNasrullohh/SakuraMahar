@@ -6,7 +6,6 @@ import AdminMaharsTab from './admin/AdminMaharsTab';
 import AdminGuestsTab from './admin/AdminGuestsTab';
 import AdminInvitationsTab from './admin/AdminInvitationsTab';
 import AdminMessagesTab from './admin/AdminMessagesTab';
-import AdminMediaTab from './admin/AdminMediaTab';
 import AdminAuditTab from './admin/AdminAuditTab';
 import AdminOrdersTab from './admin/AdminOrdersTab';
 import AdminProductsTab from './admin/AdminProductsTab';
@@ -15,7 +14,6 @@ import {
   createGuest,
   createInvitation,
   createMahar,
-  deleteMediaAsset,
   deleteOrder,
   deleteAdminUser,
   deleteGuest,
@@ -29,7 +27,6 @@ import {
   fetchMessages,
   fetchOrders,
   respondToMessage,
-  updateMediaAsset,
   updateOrder,
   updateAdminUser,
   updateGuest,
@@ -87,14 +84,6 @@ const tabs = [
     icon: 'fa-shopping-cart',
     title: 'Order',
     description: 'Pantau checkout dan tindak lanjut.'
-  },
-  {
-    id: 'media',
-    label: 'Media',
-    navHint: '',
-    icon: 'fa-images',
-    title: 'Media',
-    description: 'Kelola logo, banner, dan aset visual.'
   },
   {
     id: 'audit',
@@ -254,16 +243,16 @@ const AdminPanel = ({
       value: overview.messages ?? messages.length
     },
     {
-      id: 'media',
-      icon: 'fa-image',
+      id: 'products',
+      icon: 'fa-box-open',
       tone: 'purple',
-      label: 'Media',
-      value: overview.mediaAssets ?? mediaAssets.length
+      label: 'Produk',
+      value: productCount
     }
   ];
   const quickActions = [
     { id: 'products', label: 'Kelola Produk' },
-    { id: 'content', label: 'Edit Storefront' },
+    { id: 'content', label: 'Ubah Profile Website' },
     { id: 'orders', label: 'Cek Order' },
     { id: 'messages', label: 'Balas Lead' }
   ];
@@ -291,10 +280,6 @@ const AdminPanel = ({
       { id: 'orders', label: 'Order', value: formatMetricValue(overview.orders ?? orders.length) },
       { id: 'activeOrders', label: 'Aktif', value: formatMetricValue(activeOrderCount) },
       { id: 'completedOrders', label: 'Selesai', value: formatMetricValue(completedOrderCount) }
-    ],
-    media: [
-      { id: 'media', label: 'Media', value: formatMetricValue(mediaAssets.length) },
-      { id: 'products', label: 'Produk', value: formatMetricValue(productCount) }
     ],
     audit: [
       { id: 'logs', label: 'Log', value: formatMetricValue(auditLogs.length) },
@@ -350,7 +335,7 @@ const AdminPanel = ({
       { key: 'messages', label: 'pesan', request: fetchMessages, fallback: { messages: [] } },
       { key: 'orders', label: 'orders', request: fetchOrders, fallback: { orders: [] } },
       { key: 'audit', label: 'audit log', request: fetchAuditLogs, fallback: { logs: [] } },
-      { key: 'media', label: 'media', request: fetchMediaAssets, fallback: { assets: [] } }
+      { key: 'media', label: 'aset visual', request: fetchMediaAssets, fallback: { assets: [] } }
     ];
 
     const results = await Promise.allSettled(requests.map((item) => item.request()));
@@ -523,31 +508,6 @@ const AdminPanel = ({
       setUploadDraft((current) => ({ ...current, isUploading: false }));
       setError(error.message || 'Media gagal diunggah.');
       return [];
-    }
-  };
-
-  const saveMediaAsset = async (asset) => {
-    try {
-      const response = await updateMediaAsset(asset.id, {
-        displayName: asset.displayName || '',
-        altText: asset.altText || ''
-      });
-      setMediaAssets((current) => current.map((item) => (item.id === asset.id ? response.asset : item)));
-      await syncAfterMutation();
-      setSuccess('Metadata media berhasil diperbarui.');
-    } catch (error) {
-      setError(error.message || 'Media gagal diperbarui.');
-    }
-  };
-
-  const removeMediaAsset = async (id) => {
-    try {
-      await deleteMediaAsset(id);
-      setMediaAssets((current) => current.filter((item) => item.id !== id));
-      await syncAfterMutation();
-      setSuccess(`Media #${id} berhasil dihapus.`);
-    } catch (error) {
-      setError(error.message || 'Media gagal dihapus.');
     }
   };
 
@@ -749,8 +709,6 @@ const AdminPanel = ({
         return <AdminMessagesTab messages={messages} filters={filters.messages} setFilter={(field, value) => setTabFilter('messages', field, value)} updateListItem={(id, field, value) => updateListItem(setMessages, id, field, value)} saveMessageResponse={saveMessageResponse} removeMessage={removeMessage} />;
       case 'orders':
         return <AdminOrdersTab orders={orders} filters={filters.orders} setFilter={(field, value) => setTabFilter('orders', field, value)} updateListItem={(id, field, value) => updateListItem(setOrders, id, field, value)} saveOrder={saveOrder} removeOrder={removeOrder} />;
-      case 'media':
-        return <AdminMediaTab mediaAssets={mediaAssets} filters={filters.media} setFilter={(field, value) => setTabFilter('media', field, value)} uploadDraft={uploadDraft} setUploadDraft={setUploadDraft} handleMediaUpload={handleMediaUpload} copyText={copyText} updateListItem={(id, field, value) => updateListItem(setMediaAssets, id, field, value)} saveMediaAsset={saveMediaAsset} removeMediaAsset={removeMediaAsset} />;
       case 'audit':
         return <AdminAuditTab auditLogs={auditLogs} filters={filters.audit} setFilter={(field, value) => setTabFilter('audit', field, value)} />;
       default:
@@ -826,8 +784,7 @@ const AdminPanel = ({
                         tab.id === 'invitations' ? invitations.length :
                           tab.id === 'messages' ? (overview.messages ?? messages.length) :
                             tab.id === 'orders' ? (overview.openOrders ?? orders.length) :
-                              tab.id === 'media' ? mediaAssets.length :
-                                tab.id === 'audit' ? auditLogs.length : null;
+                              tab.id === 'audit' ? auditLogs.length : null;
 
                 return (
                   <button

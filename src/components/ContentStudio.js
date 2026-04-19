@@ -277,7 +277,7 @@ const ContentStudio = ({
     if (!imageAssets.length) {
       return (
         <div className="admin-empty">
-          Belum ada media lokal. Upload dulu di tab Media, lalu aset akan muncul otomatis di sini.
+          Belum ada aset tersimpan. Upload langsung dari panel Profile Website, Favicon, Hero, atau Produk, lalu aset akan muncul otomatis di sini.
         </div>
       );
     }
@@ -326,7 +326,7 @@ const ContentStudio = ({
   };
 
   const sectionLaunchers = [
-    { id: 'branding', title: 'Branding', description: 'Nama brand, logo, favicon, dan metadata browser.' },
+    { id: 'branding', title: 'Profile Website', description: 'Ganti logo/profile website dan favicon dengan alur yang lebih mudah.' },
     { id: 'hero', title: 'Hero', description: 'Badge, headline, tombol utama, dan foto hero.' },
     { id: 'heroStats', title: 'Hero Stats', description: `${content.heroStats.length} stat aktif di homepage.` },
     { id: 'features', title: 'Fitur', description: `${content.features.length} fitur utama tampil di homepage.` },
@@ -340,8 +340,8 @@ const ContentStudio = ({
 
   const panelMeta = {
     branding: {
-      title: 'Branding',
-      description: 'Edit brand, logo, dan favicon lewat panel overlay.'
+      title: 'Profile Website & Favicon',
+      description: 'Ubah logo/profile website dan favicon dengan drag-and-drop, tanpa form ribet.'
     },
     hero: {
       title: 'Hero',
@@ -383,43 +383,57 @@ const ContentStudio = ({
 
   const renderBrandingPanel = () => (
     <div className="admin-overlay-stack">
-      <div className="admin-detail-grid">
-        <label className="admin-field"><span>Nama Brand</span><input value={content.branding.brandName || ''} onChange={(event) => updateField(['branding', 'brandName'], event.target.value)} /></label>
-        <label className="admin-field"><span>Judul Browser</span><input value={content.branding.browserTitle || ''} onChange={(event) => updateField(['branding', 'browserTitle'], event.target.value)} /></label>
-        <label className="admin-field admin-field-full"><span>Meta Description</span><textarea value={content.branding.metaDescription || ''} onChange={(event) => updateField(['branding', 'metaDescription'], event.target.value)} /></label>
-        <label className="admin-field admin-field-full"><span>Path/URL Logo</span><input value={content.branding.logoUrl || ''} onChange={(event) => updateField(['branding', 'logoUrl'], event.target.value)} placeholder="/uploads/branding/logo.png atau https://res.cloudinary.com/..." /></label>
-        <label className="admin-field"><span>Alt Logo</span><input value={content.branding.logoAlt || ''} onChange={(event) => updateField(['branding', 'logoAlt'], event.target.value)} /></label>
-        <label className="admin-field"><span>Class Icon Logo</span><input value={content.branding.logoIconClass || ''} onChange={(event) => updateField(['branding', 'logoIconClass'], event.target.value)} placeholder="fas fa-cherry" /></label>
-        <label className="admin-field admin-field-full"><span>Path/URL Favicon</span><input value={content.branding.faviconUrl || ''} onChange={(event) => updateField(['branding', 'faviconUrl'], event.target.value)} placeholder="/uploads/branding/favicon.png atau https://res.cloudinary.com/..." /></label>
+      <div className="admin-branding-helper">
+        Ubah identitas website dari sini. Cukup drag & drop logo/profile website dan favicon, lalu simpan.
       </div>
 
-      <div className="admin-grid-two">
-        <AdminImageDropzone
-          title="Drag & drop logo"
-          hint="Upload logo ke folder branding lalu otomatis masuk ke field logo."
-          folderLabel="Upload ke: branding"
-          isUploading={uploadDraft?.isUploading}
-          onFilesSelected={(files) => uploadAndAssignImage(files, 'branding', ['branding', 'logoUrl'])}
-        />
-        <AdminImageDropzone
-          title="Drag & drop favicon"
-          hint="Upload favicon ke folder branding lalu otomatis masuk ke field favicon."
-          folderLabel="Upload ke: branding"
-          isUploading={uploadDraft?.isUploading}
-          onFilesSelected={(files) => uploadAndAssignImage(files, 'branding', ['branding', 'faviconUrl'])}
-        />
-      </div>
-
-      <div className="branding-preview-grid">
-        <div className="branding-preview-card">
-          <small>Logo</small>
-          {content.branding.logoUrl ? <img src={content.branding.logoUrl} alt={content.branding.logoAlt || content.branding.brandName || 'Logo'} className="branding-preview-logo" /> : <div className="branding-preview-placeholder">Belum ada logo</div>}
+      <div className="branding-preview-grid admin-branding-preview-grid">
+        <div className="branding-preview-card admin-branding-card">
+          <small>Profile Website</small>
+          {content.branding.logoUrl ? <img src={content.branding.logoUrl} alt={content.branding.logoAlt || content.branding.brandName || 'Logo'} className="branding-preview-logo" /> : <div className="branding-preview-placeholder">Belum ada logo/profile</div>}
+          <AdminImageDropzone
+            title="Drag & drop logo/profile"
+            hint="Upload logo/profile website ke folder branding."
+            folderLabel="Upload ke: branding"
+            isUploading={uploadDraft?.isUploading}
+            onFilesSelected={(files) => uploadAndAssignImage(files, 'branding', ['branding', 'logoUrl'])}
+          />
         </div>
-        <div className="branding-preview-card">
+
+        <div className="branding-preview-card admin-branding-card">
           <small>Favicon</small>
           {content.branding.faviconUrl ? <img src={content.branding.faviconUrl} alt="Favicon preview" className="branding-preview-favicon" /> : <div className="branding-preview-placeholder">Belum ada favicon</div>}
+          <AdminImageDropzone
+            title="Drag & drop favicon"
+            hint="Upload favicon ke folder branding."
+            folderLabel="Upload ke: branding"
+            isUploading={uploadDraft?.isUploading}
+            onFilesSelected={(files) => uploadAndAssignImage(files, 'branding', ['branding', 'faviconUrl'])}
+          />
         </div>
       </div>
+
+      <div className="admin-detail-grid">
+        <label className="admin-field"><span>Nama Brand</span><input value={content.branding.brandName || ''} onChange={(event) => updateField(['branding', 'brandName'], event.target.value)} /></label>
+        <label className="admin-field admin-field-full"><span>Meta Description</span><textarea value={content.branding.metaDescription || ''} onChange={(event) => updateField(['branding', 'metaDescription'], event.target.value)} /></label>
+        <label className="admin-field"><span>Judul Browser</span><input value={content.branding.browserTitle || ''} onChange={(event) => updateField(['branding', 'browserTitle'], event.target.value)} placeholder="Judul tab browser" /></label>
+        <label className="admin-field"><span>Alt Logo/Profile</span><input value={content.branding.logoAlt || ''} onChange={(event) => updateField(['branding', 'logoAlt'], event.target.value)} placeholder="Deskripsi singkat logo" /></label>
+      </div>
+
+      <details className="admin-dropdown-card">
+        <summary>
+          <span className="admin-dropdown-copy">
+            <strong>Pengaturan Manual</strong>
+            <small>Hanya dipakai kalau ingin isi URL gambar secara manual.</small>
+          </span>
+        </summary>
+        <div className="admin-dropdown-body">
+          <div className="admin-detail-grid">
+            <label className="admin-field admin-field-full"><span>Path/URL Logo/Profile</span><input value={content.branding.logoUrl || ''} onChange={(event) => updateField(['branding', 'logoUrl'], event.target.value)} placeholder="/uploads/branding/logo.png atau https://res.cloudinary.com/..." /></label>
+            <label className="admin-field admin-field-full"><span>Path/URL Favicon</span><input value={content.branding.faviconUrl || ''} onChange={(event) => updateField(['branding', 'faviconUrl'], event.target.value)} placeholder="/uploads/branding/favicon.png atau https://res.cloudinary.com/..." /></label>
+          </div>
+        </div>
+      </details>
     </div>
   );
 
@@ -671,14 +685,14 @@ const ContentStudio = ({
 
   return (
     <div className="content-studio">
-      <div className="admin-card admin-card-highlight">
-        <div className="admin-card-head">
-          <div>
-            <h3>Media Workflow</h3>
-            <p>Upload gambar ke tab Media atau pakai drag-and-drop pada section branding dan hero. Semua form utama sekarang dibuka sebagai panel overlay di depan halaman ini.</p>
-          </div>
-          <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
-            {isSaving ? 'Menyimpan...' : 'Simpan Storefront'}
+        <div className="admin-card admin-card-highlight">
+          <div className="admin-card-head">
+            <div>
+            <h3>Aset Visual</h3>
+            <p>Gunakan aset yang sudah tersimpan atau upload langsung dari panel Profile Website, Favicon, Hero, dan Produk. Semua form utama sekarang dibuka sebagai panel overlay di depan halaman ini.</p>
+            </div>
+            <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
+              {isSaving ? 'Menyimpan...' : 'Simpan Storefront'}
           </button>
         </div>
         {renderQuickMediaLibrary()}
