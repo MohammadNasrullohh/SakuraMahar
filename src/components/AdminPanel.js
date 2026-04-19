@@ -39,19 +39,19 @@ import {
 const tabs = [
   {
     id: 'overview',
-    label: 'Overview',
+    label: 'Ringkasan',
     navHint: '',
     icon: 'fa-chart-pie',
-    title: 'Dashboard',
-    description: 'Pantau performa toko dan aktivitas utama.'
+    title: 'Panel Admin',
+    description: 'Pantau performa website dan aktivitas utama.'
   },
   {
     id: 'content',
-    label: 'Storefront',
+    label: 'Tampilan',
     navHint: '',
     icon: 'fa-pencil-ruler',
-    title: 'Storefront',
-    description: 'Kelola branding, hero, dan section publik.'
+    title: 'Tampilan Website',
+    description: 'Kelola tampilan hero dan section publik.'
   },
   {
     id: 'products',
@@ -63,7 +63,7 @@ const tabs = [
   },
   {
     id: 'users',
-    label: 'Users',
+    label: 'Pengguna',
     navHint: '',
     icon: 'fa-users',
     title: 'Pengguna',
@@ -75,19 +75,19 @@ const tabs = [
     navHint: '',
     icon: 'fa-comments',
     title: 'Pesan',
-    description: 'Inbox lead dan balasan admin.'
+    description: 'Inbox kontak dan balasan admin.'
   },
   {
     id: 'orders',
-    label: 'Orders',
+    label: 'Pesanan',
     navHint: '',
     icon: 'fa-shopping-cart',
-    title: 'Order',
+    title: 'Pesanan',
     description: 'Pantau checkout dan tindak lanjut.'
   },
   {
     id: 'audit',
-    label: 'Audit Log',
+    label: 'Aktivitas',
     navHint: '',
     icon: 'fa-shield-alt',
     title: 'Aktivitas',
@@ -216,16 +216,16 @@ const AdminPanel = ({
   const auditEntityCount = new Set(auditLogs.map((item) => item.entityType).filter(Boolean)).size;
   const performanceCards = [
     { id: 'visitors', label: 'Pengunjung', value: websiteVisitors, hint: 'unik' },
-    { id: 'views', label: 'Page views', value: websitePageViews, hint: 'kunjungan' },
-    { id: 'leads', label: 'Lead', value: websiteLeads, hint: 'masuk' },
-    { id: 'sales', label: 'Order', value: websiteOrders, hint: 'checkout' }
+    { id: 'views', label: 'Tayangan', value: websitePageViews, hint: 'kunjungan' },
+    { id: 'leads', label: 'Kontak', value: websiteLeads, hint: 'masuk' },
+    { id: 'sales', label: 'Pesanan', value: websiteOrders, hint: 'checkout' }
   ];
   const summaryCards = [
     {
       id: 'orders',
       icon: 'fa-bag-shopping',
       tone: 'pink',
-      label: 'Order',
+      label: 'Pesanan',
       value: overview.orders ?? orders.length
     },
     {
@@ -252,9 +252,9 @@ const AdminPanel = ({
   ];
   const quickActions = [
     { id: 'products', label: 'Kelola Produk' },
-    { id: 'content', label: 'Ubah Profile Website' },
-    { id: 'orders', label: 'Cek Order' },
-    { id: 'messages', label: 'Balas Lead' }
+    { id: 'content', label: 'Atur Tampilan Website' },
+    { id: 'orders', label: 'Cek Pesanan' },
+    { id: 'messages', label: 'Balas Pesan' }
   ];
   const compactHeaderStats = {
     content: [
@@ -268,7 +268,7 @@ const AdminPanel = ({
       { id: 'categories', label: 'Kategori', value: formatMetricValue(categoryCount) }
     ],
     users: [
-      { id: 'users', label: 'User', value: formatMetricValue(users.length) },
+      { id: 'users', label: 'Pengguna', value: formatMetricValue(users.length) },
       { id: 'activeUsers', label: 'Aktif', value: formatMetricValue(activeUsersCount) },
       { id: 'admins', label: 'Admin', value: formatMetricValue(adminCount) }
     ],
@@ -277,7 +277,7 @@ const AdminPanel = ({
       { id: 'unreadMessages', label: 'Belum balas', value: formatMetricValue(unreadMessageCount) }
     ],
     orders: [
-      { id: 'orders', label: 'Order', value: formatMetricValue(overview.orders ?? orders.length) },
+      { id: 'orders', label: 'Pesanan', value: formatMetricValue(overview.orders ?? orders.length) },
       { id: 'activeOrders', label: 'Aktif', value: formatMetricValue(activeOrderCount) },
       { id: 'completedOrders', label: 'Selesai', value: formatMetricValue(completedOrderCount) }
     ],
@@ -430,9 +430,9 @@ const AdminPanel = ({
         onSessionUserUpdated?.(response.user);
       }
       await syncAfterMutation();
-      setSuccess(`User ${response.user.email} berhasil diperbarui.`);
+      setSuccess(`Akun ${response.user.email} berhasil diperbarui.`);
     } catch (error) {
-      setError(error.message || 'User gagal diperbarui.');
+      setError(error.message || 'Akun gagal diperbarui.');
     }
   };
 
@@ -441,9 +441,9 @@ const AdminPanel = ({
       await deleteAdminUser(targetUser.id);
       setUsers((current) => current.filter((item) => item.id !== targetUser.id));
       await syncAfterMutation();
-      setSuccess(`User ${targetUser.email} berhasil dihapus.`);
+      setSuccess(`Akun ${targetUser.email} berhasil dihapus.`);
     } catch (error) {
-      setError(error.message || 'User gagal dihapus.');
+      setError(error.message || 'Akun gagal dihapus.');
     }
   };
 
@@ -471,8 +471,8 @@ const AdminPanel = ({
   const removeInvitation = async (id) => { try { await deleteInvitation(id); setInvitations((current) => current.filter((item) => item.id !== id)); await syncAfterMutation(); setSuccess(`Undangan #${id} dihapus.`); } catch (error) { setError(error.message || 'Undangan gagal dihapus.'); } };
   const saveMessageResponse = async (item) => { try { const response = await respondToMessage(item.id, item.response); setMessages((current) => current.map((currentItem) => (currentItem.id === item.id ? response.data : currentItem))); await syncAfterMutation(); setSuccess(`Balasan untuk ${item.email} berhasil dikirim.`); } catch (error) { setError(error.message || 'Balasan pesan gagal dikirim.'); } };
   const removeMessage = async (id) => { try { await deleteMessage(id); setMessages((current) => current.filter((item) => item.id !== id)); await syncAfterMutation(); setSuccess(`Pesan #${id} dihapus.`); } catch (error) { setError(error.message || 'Pesan gagal dihapus.'); } };
-  const saveOrder = async (item) => { try { const response = await updateOrder(item.id, { status: item.status, priority: item.priority, adminNotes: item.adminNotes || '' }); setOrders((current) => current.map((currentItem) => (currentItem.id === item.id ? response.order : currentItem))); await syncAfterMutation(); setSuccess(`Order ${response.order.orderCode} berhasil diperbarui.`); } catch (error) { setError(error.message || 'Order gagal diperbarui.'); } };
-  const removeOrder = async (id) => { try { await deleteOrder(id); setOrders((current) => current.filter((item) => item.id !== id)); await syncAfterMutation(); setSuccess(`Order #${id} dihapus.`); } catch (error) { setError(error.message || 'Order gagal dihapus.'); } };
+  const saveOrder = async (item) => { try { const response = await updateOrder(item.id, { status: item.status, priority: item.priority, adminNotes: item.adminNotes || '' }); setOrders((current) => current.map((currentItem) => (currentItem.id === item.id ? response.order : currentItem))); await syncAfterMutation(); setSuccess(`Pesanan ${response.order.orderCode} berhasil diperbarui.`); } catch (error) { setError(error.message || 'Pesanan gagal diperbarui.'); } };
+  const removeOrder = async (id) => { try { await deleteOrder(id); setOrders((current) => current.filter((item) => item.id !== id)); await syncAfterMutation(); setSuccess(`Pesanan #${id} dihapus.`); } catch (error) { setError(error.message || 'Pesanan gagal dihapus.'); } };
 
   const handleMediaUpload = async (incomingFiles = null, folderOverride = '') => {
     const pendingFiles = Array.isArray(incomingFiles)
@@ -585,13 +585,13 @@ const AdminPanel = ({
 
         <div className="admin-card admin-traffic-card">
           <div className="admin-card-head">
-            <h3>Snapshot</h3>
+            <h3>Sorotan</h3>
           </div>
             <div className="admin-meta-list admin-meta-list-compact">
             <div><strong>Halaman teratas</strong><span>{topPage?.label || '-'}</span></div>
-            <div><strong>Views teratas</strong><span>{formatMetricValue(topPage?.views || 0)}</span></div>
+            <div><strong>Tayangan tertinggi</strong><span>{formatMetricValue(topPage?.views || 0)}</span></div>
             <div><strong>Pesan belum dibalas</strong><span>{formatMetricValue(overview.unreadMessages ?? messages.filter((item) => item.status === 'unread').length)}</span></div>
-            <div><strong>Order aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((item) => !['completed', 'cancelled'].includes(item.status)).length)}</span></div>
+            <div><strong>Pesanan aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((item) => !['completed', 'cancelled'].includes(item.status)).length)}</span></div>
             <div><strong>Admin</strong><span>{formatMetricValue(overview.admins ?? users.filter((item) => item.role === 'admin').length)}</span></div>
             <div><strong>Update</strong><span>{formatDateTimeLabel(analytics?.updatedAt, '-')}</span></div>
           </div>
@@ -622,9 +622,9 @@ const AdminPanel = ({
             <h3>Status Sistem</h3>
           </div>
           <div className="admin-meta-list admin-meta-list-compact">
-            <div><strong>Brand</strong><span>{brandName}</span></div>
+            <div><strong>Website</strong><span>{brandName}</span></div>
             <div><strong>Total Produk</strong><span>{formatMetricValue(productCount)}</span></div>
-            <div><strong>Order Aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((order) => !['completed', 'cancelled'].includes(order.status)).length)}</span></div>
+            <div><strong>Pesanan Aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((order) => !['completed', 'cancelled'].includes(order.status)).length)}</span></div>
             <div><strong>Pesan</strong><span>{formatMetricValue(overview.messages ?? messages.length)}</span></div>
             <div><strong>Audit</strong><span>{formatMetricValue(overview.auditLogs ?? auditLogs.length)}</span></div>
             <div><strong>Admin Aktif</strong><span>{displayName}</span></div>
@@ -720,14 +720,14 @@ const AdminPanel = ({
     <section className={`admin-panel ${standalone ? 'admin-panel-standalone' : ''}`} id={standalone ? undefined : 'admin-panel'}>
       <div className={standalone ? 'admin-page-shell' : 'container'}>
         <div className="admin-access-card">
-          <span className="admin-access-badge">Admin Workspace</span>
+          <span className="admin-access-badge">Panel Admin</span>
           <h1>{isAuthChecking ? 'Memeriksa akses admin...' : 'Akses panel admin dibatasi'}</h1>
           <p>
             {isAuthChecking
-              ? 'Sistem sedang memverifikasi sesi Anda sebelum membuka dashboard admin.'
+              ? 'Sistem sedang memverifikasi sesi Anda sebelum membuka panel admin.'
               : user
                 ? 'Akun ini berhasil login, tetapi belum memiliki role admin. Silakan ganti akun admin atau kembali ke website publik.'
-                : 'Silakan login menggunakan akun admin untuk membuka workspace manajemen Sakura Mahar.'}
+                : 'Silakan login menggunakan akun admin untuk membuka panel manajemen Sakura Mahar.'}
           </p>
           <div className="admin-access-actions">
             {!isAuthChecking && !user ? <button type="button" className="btn-primary" onClick={onLoginClick}>Masuk Admin</button> : null}
@@ -744,7 +744,7 @@ const AdminPanel = ({
                 Ganti Akun
               </button>
             ) : null}
-            <button type="button" className="btn-login" onClick={onBackHome}>Kembali ke Homepage</button>
+            <button type="button" className="btn-login" onClick={onBackHome}>Kembali ke Website</button>
           </div>
         </div>
       </div>
@@ -824,7 +824,7 @@ const AdminPanel = ({
               <div className="admin-topbar">
                 <div className="admin-hero-grid">
                   <div className="admin-header">
-                    <p className="admin-page-label">Overview</p>
+                    <p className="admin-page-label">Ringkasan</p>
                     <h1>{activeTabConfig.title}</h1>
                     <p>{activeTabConfig.description}</p>
                   </div>
