@@ -186,6 +186,16 @@ export const normalizeContentValue = (value) => {
 
 const cloneContent = (value) => JSON.parse(JSON.stringify(normalizeContentValue(value)));
 const isImageAsset = (asset) => asset?.mimeType?.startsWith('image/');
+const getAssetTimestamp = (asset = {}) => {
+  const candidate = asset.updatedAt || asset.createdAt || asset.uploadedAt || asset.timestamp;
+  const parsed = candidate ? Date.parse(candidate) : Number.NaN;
+
+  if (!Number.isNaN(parsed)) {
+    return parsed;
+  }
+
+  return Number(asset.id || 0) || 0;
+};
 
 const resolveAssetPath = (asset = {}) => {
   if (asset.publicPath) {
@@ -219,7 +229,7 @@ const ContentStudio = ({
   const [activePanel, setActivePanel] = useState('');
   const content = normalizeContentValue(value);
   const imageAssets = useMemo(
-    () => (Array.isArray(mediaAssets) ? mediaAssets : []).filter(isImageAsset),
+    () => (Array.isArray(mediaAssets) ? mediaAssets : []).filter(isImageAsset).slice().sort((left, right) => getAssetTimestamp(right) - getAssetTimestamp(left)),
     [mediaAssets]
   );
 
@@ -273,54 +283,95 @@ const ContentStudio = ({
     return states;
   };
 
+  const renderCurrentAssetStatus = (label, assetPath) => (
+    <div className="content-studio-status-card">
+      <span>{label}</span>
+      <strong>{assetPath ? 'Terpasang' : 'Belum ada'}</strong>
+      <small>{assetPath || 'Upload atau pilih gambar dari library.'}</small>
+    </div>
+  );
+
   const renderQuickMediaLibrary = () => {
+    const recentAssets = imageAssets.slice(0, 8);
+
     if (!imageAssets.length) {
       return (
-        <div className="admin-empty">
-          Belum ada aset tersimpan. Upload langsung dari panel Profile Website, Favicon, Hero, atau Produk, lalu aset akan muncul otomatis di sini.
+        <div className="admin-card">
+          <div className="admin-card-head">
+            <div>
+              <h3>Library Gambar</h3>
+              <p>Semua aset visual akan muncul di sini setelah di-upload dari panel Profile Website, Hero, atau Produk.</p>
+            </div>
+          </div>
+          <div className="admin-empty">
+            Belum ada aset tersimpan. Upload langsung dari panel Profile Website, Favicon, Hero, atau Produk, lalu aset akan muncul otomatis di sini.
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="content-media-grid">
-        {imageAssets.slice(0, 12).map((asset) => {
-          const assetPath = resolveAssetPath(asset);
-          const usageState = renderUsageState(assetPath);
-
-          return (
-            <div key={`${asset.id}-${assetPath}`} className="content-media-card">
-              <img src={asset.url} alt={asset.altText || asset.displayName || asset.originalName} className="content-media-preview" />
-              <div className="content-media-body">
-                <strong>{asset.displayName || asset.originalName}</strong>
-                <span>
-                  {asset.folder} · {asset.provider || 'local'}
-                </span>
-                <code>{assetPath}</code>
-                {usageState.length ? (
-                  <div className="content-media-usage">
-                    {usageState.map((label) => (
-                      <span key={label} className="admin-tag">
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="admin-actions">
-                  <button type="button" className="btn-secondary" onClick={() => updateField(['branding', 'logoUrl'], assetPath)}>
-                    Logo
-                  </button>
-                  <button type="button" className="btn-secondary" onClick={() => updateField(['branding', 'faviconUrl'], assetPath)}>
-                    Favicon
-                  </button>
-                  <button type="button" className="btn-secondary" onClick={() => updateField(['hero', 'imageUrl'], assetPath)}>
-                    Hero
-                  </button>
-                </div>
-              </div>
+      <div className="admin-card content-media-library-card">
+        <details className="admin-dropdown-card content-media-library">
+          <summary>
+            <span className="admin-dropdown-copy">
+              <strong>Library Gambar</strong>
+              <small>{imageAssets.length} aset tersimpan. Buka saat ingin memasang gambar ke logo, favicon, atau hero.</small>
+            </span>
+            <span className="content-media-library-count">#{imageAssets.length}</span>
+          </summary>
+          <div className="admin-dropdown-body">
+            <div className="content-media-library-intro">
+              <p>Pilih gambar yang sudah di-upload lalu pasang ke area yang dibutuhkan. Tampilan ini sengaja diringkas supaya storefront utama tetap bersih.</p>
             </div>
-          );
-        })}
+            <div className="content-media-grid">
+              {recentAssets.map((asset) => {
+                const assetPath = resolveAssetPath(asset);
+                const usageState = renderUsageState(assetPath);
+
+                return (
+                  <article key={`${asset.id}-${assetPath}`} className="content-media-card">
+                    <div className="content-media-preview-shell">
+                      <img src={asset.url} alt={asset.altText || asset.displayName || asset.originalName} className="content-media-preview" />
+                      {usageState.length ? (
+                        <div className="content-media-usage content-media-usage-floating">
+                          {usageState.map((label) => (
+                            <span key={label} className="admin-tag">
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="content-media-body">
+                      <div className="content-media-copy">
+                        <strong>{asset.displayName || asset.originalName}</strong>
+                        <span>
+                          {asset.folder} · {asset.provider || 'local'}
+                        </span>
+                      </div>
+                      <div className="content-media-action-grid">
+                        <button type="button" className="content-media-action" onClick={() => updateField(['branding', 'logoUrl'], assetPath)}>
+                          Logo
+                        </button>
+                        <button type="button" className="content-media-action" onClick={() => updateField(['branding', 'faviconUrl'], assetPath)}>
+                          Favicon
+                        </button>
+                        <button type="button" className="content-media-action" onClick={() => updateField(['hero', 'imageUrl'], assetPath)}>
+                          Hero
+                        </button>
+                      </div>
+                      <details className="content-media-details">
+                        <summary>Lihat path gambar</summary>
+                        <code>{assetPath}</code>
+                      </details>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </details>
       </div>
     );
   };
@@ -685,17 +736,21 @@ const ContentStudio = ({
 
   return (
     <div className="content-studio">
-        <div className="admin-card admin-card-highlight">
-          <div className="admin-card-head">
-            <div>
-            <h3>Aset Visual</h3>
-            <p>Gunakan aset yang sudah tersimpan atau upload langsung dari panel Profile Website, Favicon, Hero, dan Produk. Semua form utama sekarang dibuka sebagai panel overlay di depan halaman ini.</p>
-            </div>
-            <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
-              {isSaving ? 'Menyimpan...' : 'Simpan Storefront'}
+      <div className="admin-card admin-card-highlight">
+        <div className="admin-card-head">
+          <div>
+            <h3>Storefront</h3>
+            <p>Atur tampilan website dari panel overlay. Form utama tetap fokus, sementara library gambar dibuka hanya saat dibutuhkan.</p>
+          </div>
+          <button type="button" className="btn-primary" onClick={onSave} disabled={isSaving}>
+            {isSaving ? 'Menyimpan...' : 'Simpan Storefront'}
           </button>
         </div>
-        {renderQuickMediaLibrary()}
+        <div className="content-studio-status-grid">
+          {renderCurrentAssetStatus('Logo Website', content.branding.logoUrl)}
+          {renderCurrentAssetStatus('Favicon', content.branding.faviconUrl)}
+          {renderCurrentAssetStatus('Hero Utama', content.hero.imageUrl)}
+        </div>
       </div>
 
       <div className="admin-section-launcher-grid">
@@ -707,6 +762,8 @@ const ContentStudio = ({
           </button>
         ))}
       </div>
+
+      {renderQuickMediaLibrary()}
 
       <AdminOverlayForm
         isOpen={Boolean(activePanel)}

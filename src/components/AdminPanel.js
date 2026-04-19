@@ -804,9 +804,18 @@ const AdminPanel = ({
             </div>
 
             <div className="admin-sidebar-footer">
-              <button type="button" className="btn-secondary admin-sidebar-action" onClick={onBackHome}>Homepage</button>
-              <button type="button" className="btn-login admin-sidebar-action" onClick={onChangePasswordClick}>Password</button>
-              <button type="button" className="btn-logout admin-sidebar-action" onClick={onLogout}>Keluar</button>
+              <button type="button" className="btn-secondary admin-sidebar-action" onClick={onBackHome}>
+                <i className="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                <span>Website</span>
+              </button>
+              <button type="button" className="btn-login admin-sidebar-action" onClick={onChangePasswordClick}>
+                <i className="fas fa-key" aria-hidden="true"></i>
+                <span>Password</span>
+              </button>
+              <button type="button" className="btn-logout admin-sidebar-action" onClick={onLogout}>
+                <i className="fas fa-right-from-bracket" aria-hidden="true"></i>
+                <span>Keluar</span>
+              </button>
             </div>
           </aside>
 

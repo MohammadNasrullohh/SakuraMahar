@@ -197,6 +197,44 @@
 .admin-sidebar-action {
   width: 100%;
   justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  border-radius: 16px;
+}
+
+.admin-sidebar-action i {
+  font-size: 13px;
+}
+
+.admin-sidebar-footer .btn-secondary.admin-sidebar-action {
+  background: transparent;
+  border-color: rgba(236, 72, 153, 0.6);
+  color: #f9a8d4;
+  box-shadow: none;
+}
+
+.admin-sidebar-footer .btn-secondary.admin-sidebar-action:hover {
+  background: rgba(236, 72, 153, 0.12);
+  color: #ffffff;
+  border-color: rgba(244, 114, 182, 0.74);
+}
+
+.admin-sidebar-footer .btn-login.admin-sidebar-action {
+  background: rgba(255, 255, 255, 0.9);
+  color: #312e81;
+  border: 1px solid rgba(196, 181, 253, 0.4);
+}
+
+.admin-sidebar-footer .btn-login.admin-sidebar-action:hover {
+  color: #1d4ed8;
+  background: #ffffff;
+}
+
+.admin-sidebar-footer .btn-logout.admin-sidebar-action {
+  background: linear-gradient(135deg, #fb7185 0%, #ff7a59 100%);
+  box-shadow: 0 14px 30px rgba(251, 113, 133, 0.24);
 }
 
 .admin-main {
@@ -560,6 +598,44 @@
 .content-studio {
   display: grid;
   gap: 18px;
+}
+
+.content-studio-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.content-studio-status-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid #e6ebf4;
+  background:
+    radial-gradient(circle at top right, rgba(236, 72, 153, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  min-width: 0;
+}
+
+.content-studio-status-card span {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7a8498;
+}
+
+.content-studio-status-card strong {
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.content-studio-status-card small {
+  color: #667289;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .admin-performance-layout {
@@ -1816,8 +1892,48 @@
 .content-media-grid,
 .media-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 18px;
+}
+
+.content-media-library-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.content-media-library {
+  border: none;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(236, 72, 153, 0.06), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.content-media-library-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.content-media-library-intro {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e6ebf4;
+}
+
+.content-media-library-intro p {
+  margin: 0;
+  color: #5f6980;
+  line-height: 1.65;
 }
 
 .content-media-card,
@@ -1825,13 +1941,26 @@
   overflow: hidden;
   border-radius: 22px;
   border: 1px solid #e7eaf3;
-  background: #ffffff;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.content-media-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
+  border-color: #d9e2f2;
+}
+
+.content-media-preview-shell {
+  position: relative;
+  overflow: hidden;
 }
 
 .content-media-preview {
   width: 100%;
-  height: 168px;
+  height: 176px;
   object-fit: cover;
   display: block;
 }
@@ -1857,13 +1986,23 @@
 .content-media-body,
 .media-card-body {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   padding: 16px;
+}
+
+.content-media-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .content-media-body strong,
 .media-card-body strong {
   color: #172033;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .content-media-body span,
@@ -1872,9 +2011,61 @@
   text-transform: capitalize;
 }
 
-.content-media-body code,
+.content-media-usage-floating {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  pointer-events: none;
+}
+
+.content-media-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.content-media-action {
+  min-height: 40px;
+  border-radius: 14px;
+  border: 1px solid #e3d7fb;
+  background: #ffffff;
+  color: #7c3aed;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.content-media-action:hover {
+  transform: translateY(-1px);
+  border-color: #c4b5fd;
+  background: #f5f3ff;
+  color: #6d28d9;
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.12);
+}
+
+.content-media-details {
+  border-top: 1px solid #edf2f7;
+  padding-top: 12px;
+}
+
+.content-media-details summary {
+  list-style: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.content-media-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.content-media-details code,
 .media-card-path {
   display: block;
+  margin-top: 10px;
   padding: 10px 12px;
   border-radius: 14px;
   background: #f8fafc;
@@ -2012,6 +2203,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .content-studio-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-performance-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2113,6 +2308,7 @@
   .admin-performance-grid,
   .admin-performance-meta,
   .admin-products-stats,
+  .content-studio-status-grid,
   .admin-quick-grid,
   .admin-detail-grid,
   .admin-content-grid,
@@ -2189,6 +2385,10 @@
     width: 46px;
     height: 46px;
     border-radius: 16px;
+  }
+
+  .content-media-action-grid {
+    grid-template-columns: 1fr;
   }
 
   .admin-products-toolbar-actions {
@@ -2276,5 +2476,9 @@
 
   .admin-traffic-bars {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-media-grid {
+    grid-template-columns: 1fr;
   }
 }
