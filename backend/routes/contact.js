@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const validator = require('validator');
+const { recordContactLead } = require('../utils/analyticsStore');
 const requireAdmin = require('../middleware/requireAdmin');
 const { createAuditLog } = require('../utils/auditLogStore');
 const { notifyMessageResponse } = require('../utils/notificationService');
@@ -46,6 +47,9 @@ router.post('/send', async (req, res) => {
       entityType: 'message',
       entityId: String(message.id),
       summary: `Pesan baru dari ${nama}`
+    });
+    await recordContactLead({
+      path: '/'
     });
 
     res.status(201).json({

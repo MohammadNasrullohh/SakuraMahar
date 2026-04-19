@@ -32,6 +32,7 @@ app.use('/api/contact', require('./routes/contact'));
 app.use('/api/site-content', require('./routes/siteContent'));
 app.use('/api/media', require('./routes/media'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 app.get('/api/health', (req, res) => {
   res.json({

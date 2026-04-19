@@ -42,58 +42,58 @@ const tabs = [
   {
     id: 'overview',
     label: 'Overview',
-    navHint: 'Ikhtisar sistem',
+    navHint: '',
     icon: 'fa-chart-pie',
-    title: 'Ringkasan Operasional',
-    description: 'Pantau performa bisnis, aktivitas pelanggan, dan status tim dalam satu dashboard admin.'
+    title: 'Ringkasan',
+    description: ''
   },
   {
     id: 'content',
     label: 'Storefront',
-    navHint: 'Konten publik',
+    navHint: '',
     icon: 'fa-pencil-ruler',
-    title: 'Storefront & Katalog',
-    description: 'Kelola branding, homepage, katalog produk, dan flow checkout dari workspace visual yang terpusat.'
+    title: 'Storefront',
+    description: ''
   },
   {
     id: 'users',
     label: 'Users',
-    navHint: 'Akun & role',
+    navHint: '',
     icon: 'fa-users',
-    title: 'Manajemen Pengguna',
-    description: 'Atur role user, status akun, dan akses admin tanpa tercampur dengan tampilan homepage.'
+    title: 'Pengguna',
+    description: ''
   },
   {
     id: 'messages',
     label: 'Pesan',
-    navHint: 'Inbox lead',
+    navHint: '',
     icon: 'fa-comments',
-    title: 'Inbox Pesan',
-    description: 'Pantau pesan masuk, balas cepat, dan kelola lead dari halaman kontak publik.'
+    title: 'Pesan',
+    description: ''
   },
   {
     id: 'orders',
     label: 'Orders',
-    navHint: 'Checkout masuk',
+    navHint: '',
     icon: 'fa-shopping-cart',
-    title: 'Orders Management',
-    description: 'Lihat order produk masuk, prioritas, status follow-up, dan catatan admin dengan struktur yang jelas.'
+    title: 'Order',
+    description: ''
   },
   {
     id: 'media',
     label: 'Media',
-    navHint: 'Aset visual',
+    navHint: '',
     icon: 'fa-images',
-    title: 'Media Library',
-    description: 'Upload, edit, dan gunakan aset visual untuk logo, favicon, banner toko, serta foto produk.'
+    title: 'Media',
+    description: ''
   },
   {
     id: 'audit',
     label: 'Audit Log',
-    navHint: 'Jejak perubahan',
+    navHint: '',
     icon: 'fa-shield-alt',
-    title: 'Audit & Aktivitas',
-    description: 'Telusuri jejak perubahan penting supaya kontrol admin lebih aman dan transparan.'
+    title: 'Aktivitas',
+    description: ''
   }
 ];
 
@@ -106,6 +106,28 @@ const clone = (value) => JSON.parse(JSON.stringify(value || {}));
 const formatMetricLabel = (key) => String(key || '').replace(/([A-Z])/g, ' $1').trim();
 const formatMetricValue = (value) =>
   typeof value === 'number' ? value.toLocaleString('id-ID') : String(value ?? '0');
+const formatRatio = (value) =>
+  `${Number(value || 0).toLocaleString('id-ID', { maximumFractionDigits: 1 })}%`;
+const formatDecimal = (value) =>
+  Number(value || 0).toLocaleString('id-ID', { maximumFractionDigits: 1 });
+const formatDateTimeLabel = (value, fallback = '-') => {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return fallback;
+  }
+
+  return parsedDate.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 const AdminPanel = ({
   user,
@@ -157,45 +179,62 @@ const AdminPanel = ({
   const activeTabConfig = tabs.find((tab) => tab.id === activeTab) || tabs[0];
   const displayName = user?.nama || user?.email || 'Admin';
   const brandName = branding?.brandName || 'Sakura Mahar';
+  const analytics = dashboard?.analytics || null;
+  const analyticsSummary = analytics?.summary || {};
+  const analyticsPages = Array.isArray(analytics?.pages) ? analytics.pages : [];
+  const analyticsDaily = Array.isArray(analytics?.daily) ? analytics.daily : [];
+  const websiteVisitors = Number(analyticsSummary.uniqueVisitors || 0);
+  const websitePageViews = Number(analyticsSummary.pageViews || 0);
+  const websiteLeads = Math.max(Number(analyticsSummary.contactLeads || 0), Number(overview.messages ?? messages.length ?? 0));
+  const websiteOrders = Math.max(Number(analyticsSummary.orders || 0), Number(overview.orders ?? orders.length ?? 0));
+  const leadRate = websiteVisitors ? (websiteLeads / websiteVisitors) * 100 : 0;
+  const orderRate = websiteVisitors ? (websiteOrders / websiteVisitors) * 100 : 0;
+  const pagesPerVisitor = websiteVisitors ? websitePageViews / websiteVisitors : 0;
+  const trafficWindow = analyticsDaily.slice(-7);
+  const topPage = analyticsPages[0] || null;
+  const maxTrafficViews = Math.max(...trafficWindow.map((entry) => Number(entry.pageViews || 0)), 1);
+  const hasPerformanceData = websiteVisitors > 0 || websitePageViews > 0 || websiteLeads > 0 || websiteOrders > 0;
+  const performanceCards = [
+    { id: 'visitors', label: 'Pengunjung', value: websiteVisitors, hint: 'unik' },
+    { id: 'views', label: 'Page views', value: websitePageViews, hint: 'kunjungan' },
+    { id: 'leads', label: 'Lead', value: websiteLeads, hint: 'masuk' },
+    { id: 'sales', label: 'Order', value: websiteOrders, hint: 'checkout' }
+  ];
   const summaryCards = [
     {
       id: 'orders',
       icon: 'fa-bag-shopping',
       tone: 'pink',
-      label: 'Order Masuk',
-      value: overview.orders ?? orders.length,
-      detail: 'Checkout produk yang sudah tercatat.'
+      label: 'Order',
+      value: overview.orders ?? orders.length
     },
     {
       id: 'openOrders',
       icon: 'fa-bolt',
       tone: 'amber',
-      label: 'Perlu Follow Up',
-      value: overview.openOrders ?? orders.filter((item) => item.status !== 'completed').length,
-      detail: 'Order yang masih aktif ditindaklanjuti.'
+      label: 'Aktif',
+      value: overview.openOrders ?? orders.filter((item) => item.status !== 'completed').length
     },
     {
       id: 'messages',
       icon: 'fa-inbox',
       tone: 'blue',
-      label: 'Pesan Masuk',
-      value: overview.messages ?? messages.length,
-      detail: 'Inbox publik dari form kontak website.'
+      label: 'Pesan',
+      value: overview.messages ?? messages.length
     },
     {
       id: 'media',
       icon: 'fa-image',
       tone: 'purple',
-      label: 'Aset Media',
-      value: overview.mediaAssets ?? mediaAssets.length,
-      detail: 'File visual siap pakai untuk branding.'
+      label: 'Media',
+      value: overview.mediaAssets ?? mediaAssets.length
     }
   ];
   const quickActions = [
-    { id: 'content', label: 'Edit Storefront', hint: 'Branding, hero, katalog produk, dan checkout' },
-    { id: 'orders', label: 'Cek Orders', hint: 'Lanjutkan follow-up order terbaru' },
-    { id: 'messages', label: 'Balas Lead', hint: 'Buka inbox dan respon pesan masuk' },
-    { id: 'media', label: 'Kelola Media', hint: 'Upload logo, banner, dan foto produk' }
+    { id: 'content', label: 'Edit Storefront' },
+    { id: 'orders', label: 'Cek Order' },
+    { id: 'messages', label: 'Balas Lead' },
+    { id: 'media', label: 'Kelola Media' }
   ];
 
   useEffect(() => {
@@ -426,23 +465,86 @@ const AdminPanel = ({
 
   const renderOverviewTab = () => (
     <div className="admin-overview-stack">
-      <div className="admin-overview-grid">
-        {summaryCards.map((card) => (
-          <div key={card.id} className="admin-metric-card">
-            <span>{card.label}</span>
-            <strong>{formatMetricValue(card.value)}</strong>
-            <p>{card.detail}</p>
+      <div className="admin-performance-layout">
+        <div className="admin-card admin-card-highlight admin-performance-card">
+          <div className="admin-card-head">
+            <h3>Performa Website</h3>
           </div>
-        ))}
+
+          <div className="admin-performance-grid">
+            {performanceCards.map((card) => (
+              <div key={card.id} className="admin-performance-tile">
+                <span>{card.label}</span>
+                <strong>{formatMetricValue(card.value)}</strong>
+                <small>{card.hint}</small>
+              </div>
+            ))}
+          </div>
+
+          {hasPerformanceData ? (
+            <>
+              {trafficWindow.length ? (
+                <div className="admin-traffic-bars">
+                  {trafficWindow.map((entry) => (
+                    <div key={entry.date} className="admin-traffic-bar">
+                      <div className="admin-traffic-bar-track">
+                        <span
+                          className="admin-traffic-bar-fill"
+                          style={{
+                            height: `${Math.max(18, Math.round((Number(entry.pageViews || 0) / maxTrafficViews) * 100))}%`
+                          }}
+                        />
+                      </div>
+                      <strong>{formatMetricValue(entry.pageViews)}</strong>
+                      <small>{new Date(`${entry.date}T00:00:00`).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="admin-traffic-empty">Histori 7 hari akan muncul setelah ada kunjungan publik.</div>
+              )}
+
+              <div className="admin-performance-meta">
+                <div>
+                  <strong>{formatRatio(leadRate)}</strong>
+                  <span>Rasio lead</span>
+                </div>
+                <div>
+                  <strong>{formatRatio(orderRate)}</strong>
+                  <span>Rasio order</span>
+                </div>
+                <div>
+                  <strong>{formatDecimal(pagesPerVisitor)}x</strong>
+                  <span>Halaman per pengunjung</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="admin-empty">
+              Statistik akan muncul setelah ada kunjungan publik, pesan masuk, atau checkout baru.
+            </div>
+          )}
+        </div>
+
+        <div className="admin-card admin-traffic-card">
+          <div className="admin-card-head">
+            <h3>Snapshot</h3>
+          </div>
+          <div className="admin-meta-list admin-meta-list-compact">
+            <div><strong>Halaman teratas</strong><span>{topPage?.label || '-'}</span></div>
+            <div><strong>Views teratas</strong><span>{formatMetricValue(topPage?.views || 0)}</span></div>
+            <div><strong>Pesan belum dibalas</strong><span>{formatMetricValue(overview.unreadMessages ?? messages.filter((item) => item.status === 'unread').length)}</span></div>
+            <div><strong>Order aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((item) => !['completed', 'cancelled'].includes(item.status)).length)}</span></div>
+            <div><strong>Admin</strong><span>{formatMetricValue(overview.admins ?? users.filter((item) => item.role === 'admin').length)}</span></div>
+            <div><strong>Update</strong><span>{formatDateTimeLabel(analytics?.updatedAt, '-')}</span></div>
+          </div>
+        </div>
       </div>
 
       <div className="admin-dashboard-grid">
         <div className="admin-card admin-card-highlight">
           <div className="admin-card-head">
-            <div>
-              <h3>Pusat Kendali Cepat</h3>
-              <p className="admin-card-subtitle">Shortcut ke area kerja yang paling sering dipakai admin.</p>
-            </div>
+            <h3>Aksi Cepat</h3>
           </div>
           <div className="admin-quick-grid">
             {quickActions.map((action) => (
@@ -453,7 +555,6 @@ const AdminPanel = ({
                 onClick={() => setActiveTab(action.id)}
               >
                 <strong>{action.label}</strong>
-                <span>{action.hint}</span>
               </button>
             ))}
           </div>
@@ -461,17 +562,14 @@ const AdminPanel = ({
 
         <div className="admin-card">
           <div className="admin-card-head">
-            <div>
-              <h3>Kesehatan Workspace</h3>
-              <p className="admin-card-subtitle">Snapshot singkat agar admin cepat tahu kondisi toko dan operasional.</p>
-            </div>
+            <h3>Status Sistem</h3>
           </div>
           <div className="admin-meta-list admin-meta-list-compact">
-            <div><strong>Brand Aktif</strong><span>{brandName}</span></div>
+            <div><strong>Brand</strong><span>{brandName}</span></div>
             <div><strong>Total Produk</strong><span>{formatMetricValue(siteContent?.products?.length ?? contentForm?.products?.length ?? 0)}</span></div>
             <div><strong>Order Aktif</strong><span>{formatMetricValue(overview.openOrders ?? orders.filter((order) => !['completed', 'cancelled'].includes(order.status)).length)}</span></div>
-            <div><strong>Total Pesan</strong><span>{formatMetricValue(overview.messages ?? messages.length)}</span></div>
-            <div><strong>Audit Log</strong><span>{formatMetricValue(overview.auditLogs ?? auditLogs.length)}</span></div>
+            <div><strong>Pesan</strong><span>{formatMetricValue(overview.messages ?? messages.length)}</span></div>
+            <div><strong>Audit</strong><span>{formatMetricValue(overview.auditLogs ?? auditLogs.length)}</span></div>
             <div><strong>Admin Aktif</strong><span>{displayName}</span></div>
           </div>
         </div>
@@ -480,10 +578,7 @@ const AdminPanel = ({
       {Object.keys(overview).length ? (
         <div className="admin-card">
           <div className="admin-card-head">
-            <div>
-              <h3>Semua Metrik</h3>
-              <p className="admin-card-subtitle">Detail angka dari backend untuk pemeriksaan cepat.</p>
-            </div>
+            <h3>Data Sistem</h3>
           </div>
           <div className="admin-overview-grid admin-overview-grid-dense">
             {Object.entries(overview).map(([key, value]) => (
@@ -579,17 +674,14 @@ const AdminPanel = ({
               </div>
               <div>
                 <strong>{brandName}</strong>
-                <span>Admin workspace</span>
               </div>
             </div>
 
             <div className="admin-sidebar-user">
-              <span className="admin-sidebar-user-label">Akun aktif</span>
               <strong>{displayName}</strong>
               <small>{user.email}</small>
             </div>
 
-            <div className="admin-sidebar-section-label">Navigasi</div>
             <div className="admin-sidebar-nav">
               {tabs.map((tab) => {
                 const badgeValue =
@@ -608,21 +700,20 @@ const AdminPanel = ({
                     type="button"
                     className={`admin-nav-item ${activeTab === tab.id ? 'active' : ''}`}
                     onClick={() => setActiveTab(tab.id)}
-                  >
-                    <span className="admin-nav-icon"><i className={`fas ${tab.icon}`}></i></span>
-                    <span className="admin-nav-copy">
-                      <strong>{tab.label}</strong>
-                      <small>{tab.navHint || tab.description}</small>
-                    </span>
-                    {badgeValue !== null ? <span className="admin-nav-badge">{formatMetricValue(badgeValue)}</span> : null}
-                  </button>
+                    >
+                      <span className="admin-nav-icon"><i className={`fas ${tab.icon}`}></i></span>
+                      <span className="admin-nav-copy">
+                        <strong>{tab.label}</strong>
+                      </span>
+                      {badgeValue !== null ? <span className="admin-nav-badge">{formatMetricValue(badgeValue)}</span> : null}
+                    </button>
                 );
               })}
             </div>
 
             <div className="admin-sidebar-footer">
-              <button type="button" className="btn-secondary admin-sidebar-action" onClick={onBackHome}>Lihat Homepage</button>
-              <button type="button" className="btn-login admin-sidebar-action" onClick={onChangePasswordClick}>Ubah Password</button>
+              <button type="button" className="btn-secondary admin-sidebar-action" onClick={onBackHome}>Homepage</button>
+              <button type="button" className="btn-login admin-sidebar-action" onClick={onChangePasswordClick}>Password</button>
               <button type="button" className="btn-logout admin-sidebar-action" onClick={onLogout}>Keluar</button>
             </div>
           </aside>
@@ -631,24 +722,16 @@ const AdminPanel = ({
             <div className="admin-topbar">
               <div className="admin-hero-grid">
                 <div className="admin-header">
-                  <div>
-                    <p className="admin-eyebrow">Admin Dashboard</p>
-                    <h1>{activeTabConfig.title}</h1>
-                    <p>{activeTabConfig.description}</p>
-                  </div>
-                  <div className="admin-active-tab-chip">
-                    <i className={`fas ${activeTabConfig.icon}`}></i>
-                    <span>{activeTabConfig.label}</span>
-                  </div>
+                  <h1>{activeTabConfig.title}</h1>
                 </div>
                 <div className="admin-header-side">
                   <div className="admin-profile-card">
-                    <span className="admin-profile-label">Admin Aktif</span>
                     <strong>{displayName}</strong>
                     <small>{user.email}</small>
                   </div>
-                  <div className="admin-header-note">
-                    Workspace dibuat lebih ringkas supaya navigasi cepat, konten utama lega, dan panel menyesuaikan di berbagai ukuran layar.
+                  <div className="admin-profile-card admin-profile-card-compact">
+                    <strong>{formatMetricValue(websiteVisitors)}</strong>
+                    <small>Pengunjung</small>
                   </div>
                 </div>
               </div>
@@ -662,7 +745,6 @@ const AdminPanel = ({
                     <div className="admin-topbar-stat-copy">
                       <span>{card.label}</span>
                       <strong>{formatMetricValue(card.value)}</strong>
-                      <small>{card.detail}</small>
                     </div>
                   </div>
                 ))}

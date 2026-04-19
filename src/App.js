@@ -16,7 +16,7 @@ import PackageCheckoutPage from './components/PackageCheckoutPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import ToastContainer from './components/ToastContainer';
 import { clearAuthSession, verifyStoredSession } from './services/authService';
-import { fetchSiteContent } from './services/siteService';
+import { fetchSiteContent, trackSiteEvent } from './services/siteService';
 import {
   buildProductInquiryText,
   buildWhatsAppUrl,
@@ -59,10 +59,35 @@ const createFallbackFavicon = (brandName) => {
 };
 
 const PACKAGE_INQUIRY_STORAGE_KEY = 'sakuraMaharProductInquiry';
+const ANALYTICS_VISITOR_KEY = 'sakuraMaharVisitorId';
 const MIN_SCROLL_OFFSET = 96;
 const HEADER_SCROLL_GAP = 20;
 const HASH_SCROLL_RETRY_LIMIT = 6;
 const HASH_SCROLL_RETRY_DELAY = 120;
+
+const createAnalyticsVisitorId = () => {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+
+  return `visitor_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const getAnalyticsVisitorId = () => {
+  try {
+    const cachedId = localStorage.getItem(ANALYTICS_VISITOR_KEY);
+
+    if (cachedId) {
+      return cachedId;
+    }
+
+    const nextId = createAnalyticsVisitorId();
+    localStorage.setItem(ANALYTICS_VISITOR_KEY, nextId);
+    return nextId;
+  } catch (error) {
+    return createAnalyticsVisitorId();
+  }
+};
 
 const getHeaderScrollOffset = () => {
   const header = document.querySelector('.header');
@@ -160,6 +185,20 @@ function App() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (isAdminRoute) {
+      return;
+    }
+
+    trackSiteEvent({
+      eventType: 'page_view',
+      visitorId: getAnalyticsVisitorId(),
+      path: currentPath || '/'
+    }).catch(() => {
+      // Jangan ganggu UX jika analytics gagal tercatat.
+    });
+  }, [currentPath, isAdminRoute]);
 
   useEffect(() => {
     try {

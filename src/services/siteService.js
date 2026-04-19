@@ -22,6 +22,12 @@ export const createOrder = (payload) =>
     body: payload
   });
 
+export const trackSiteEvent = (payload) =>
+  requestJson('/api/analytics/track', {
+    method: 'POST',
+    body: payload
+  });
+
 export const fetchAdminDashboard = () =>
   requestJson('/api/admin/dashboard', {
     auth: true

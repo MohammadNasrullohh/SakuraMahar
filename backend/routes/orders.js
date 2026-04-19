@@ -1,5 +1,6 @@
 const express = require('express');
 const validator = require('validator');
+const { recordOrderCreated } = require('../utils/analyticsStore');
 const requireAdmin = require('../middleware/requireAdmin');
 const { verifyAuthToken } = require('../utils/auth');
 const { createAuditLog } = require('../utils/auditLogStore');
@@ -153,6 +154,9 @@ router.post('/', async (req, res) => {
         status: order.status,
         priority: order.priority
       }
+    });
+    await recordOrderCreated({
+      path: '/checkout'
     });
 
     res.status(201).json({

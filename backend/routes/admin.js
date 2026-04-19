@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const requireAdmin = require('../middleware/requireAdmin');
+const { getAnalyticsSnapshot } = require('../utils/analyticsStore');
 const { createAuditLog, listAuditLogs } = require('../utils/auditLogStore');
 const { listGuests } = require('../utils/guestStore');
 const { listInvitations } = require('../utils/invitationStore');
@@ -19,13 +20,14 @@ router.use(requireAdmin);
 
 router.get('/dashboard', async (req, res) => {
   try {
-    const [users, mahars, guests, invitations, messages, orders] = await Promise.all([
+    const [users, mahars, guests, invitations, messages, orders, analytics] = await Promise.all([
       getUsers(),
       listMahars(),
       listGuests(),
       listInvitations(),
       listMessages(),
-      listOrders()
+      listOrders(),
+      getAnalyticsSnapshot()
     ]);
 
     res.json({
@@ -52,7 +54,8 @@ router.get('/dashboard', async (req, res) => {
         invitations: invitations.slice(0, 5),
         messages: messages.slice(0, 5),
         orders: orders.slice(0, 5)
-      }
+      },
+      analytics
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
