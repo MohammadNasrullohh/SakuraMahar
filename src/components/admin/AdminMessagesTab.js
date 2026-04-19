@@ -78,7 +78,7 @@ const AdminMessagesTab = ({ messages, filters, setFilter, updateListItem, saveMe
           <option value="read">read</option>
           <option value="responded">responded</option>
         </select>
-        <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('messages.csv', filteredMessages.map((item) => ({ id: item.id, nama: item.nama, email: item.email, subjek: item.subjek, status: item.status })))}>Export CSV</button>
+        <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('messages.csv', filteredMessages.map((item) => ({ id: item.id, nama: item.nama, email: item.email, subjek: item.subjek, status: item.status })))}>Unduh CSV</button>
       </div>
 
       <div className="admin-sheet-layout">
@@ -86,7 +86,7 @@ const AdminMessagesTab = ({ messages, filters, setFilter, updateListItem, saveMe
           <div className="admin-sheet-titlebar">
             <div>
               <h3>Inbox Pesan</h3>
-              <p>{filteredMessages.length} pesan tampil dalam tabel untuk dibaca dan diproses cepat.</p>
+              <p>{filteredMessages.length} pesan siap dibaca.</p>
             </div>
           </div>
           <AdminSheetTable

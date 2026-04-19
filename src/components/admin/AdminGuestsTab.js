@@ -81,7 +81,7 @@ const AdminGuestsTab = ({ guests, filters, setFilter, newGuest, setNewGuest, upd
           <option value="declined">declined</option>
         </select>
         <button type="button" className="btn-primary" onClick={() => { setMode('create'); setSelectedId(null); }}>Tambah Tamu</button>
-        <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('guests.csv', filteredGuests.map((item) => ({ id: item.id, nama: item.nama, email: item.email, noTelepon: item.noTelepon, status: item.status })))}>Export CSV</button>
+        <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('guests.csv', filteredGuests.map((item) => ({ id: item.id, nama: item.nama, email: item.email, noTelepon: item.noTelepon, status: item.status })))}>Unduh CSV</button>
       </div>
 
       <div className="admin-sheet-layout">

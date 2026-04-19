@@ -143,7 +143,7 @@ const AdminOrdersTab = ({ orders, filters, setFilter, updateListItem, saveOrder,
             )
           }
         >
-          Export CSV
+          Unduh CSV
         </button>
       </div>
 
@@ -151,8 +151,8 @@ const AdminOrdersTab = ({ orders, filters, setFilter, updateListItem, saveOrder,
         <section className="admin-sheet-card">
           <div className="admin-sheet-titlebar">
             <div>
-              <h3>Orders Queue</h3>
-              <p>{filteredOrders.length} order produk tersusun rapi dalam tampilan spreadsheet.</p>
+              <h3>Daftar Order</h3>
+              <p>{filteredOrders.length} order siap diproses.</p>
             </div>
           </div>
           <AdminSheetTable

@@ -44,8 +44,8 @@ const tabs = [
     label: 'Overview',
     navHint: '',
     icon: 'fa-chart-pie',
-    title: 'Ringkasan',
-    description: ''
+    title: 'Dashboard',
+    description: 'Pantau performa toko dan aktivitas utama.'
   },
   {
     id: 'content',
@@ -53,7 +53,7 @@ const tabs = [
     navHint: '',
     icon: 'fa-pencil-ruler',
     title: 'Storefront',
-    description: ''
+    description: 'Kelola tampilan publik dan katalog.'
   },
   {
     id: 'users',
@@ -61,7 +61,7 @@ const tabs = [
     navHint: '',
     icon: 'fa-users',
     title: 'Pengguna',
-    description: ''
+    description: 'Atur akun, role, dan akses.'
   },
   {
     id: 'messages',
@@ -69,7 +69,7 @@ const tabs = [
     navHint: '',
     icon: 'fa-comments',
     title: 'Pesan',
-    description: ''
+    description: 'Inbox lead dan balasan admin.'
   },
   {
     id: 'orders',
@@ -77,7 +77,7 @@ const tabs = [
     navHint: '',
     icon: 'fa-shopping-cart',
     title: 'Order',
-    description: ''
+    description: 'Pantau checkout dan tindak lanjut.'
   },
   {
     id: 'media',
@@ -85,7 +85,7 @@ const tabs = [
     navHint: '',
     icon: 'fa-images',
     title: 'Media',
-    description: ''
+    description: 'Kelola logo, banner, dan aset visual.'
   },
   {
     id: 'audit',
@@ -93,7 +93,7 @@ const tabs = [
     navHint: '',
     icon: 'fa-shield-alt',
     title: 'Aktivitas',
-    description: ''
+    description: 'Lihat jejak perubahan penting.'
   }
 ];
 
@@ -177,6 +177,7 @@ const AdminPanel = ({
 
   const overview = useMemo(() => dashboard?.overview || siteSummary || {}, [dashboard, siteSummary]);
   const activeTabConfig = tabs.find((tab) => tab.id === activeTab) || tabs[0];
+  const isOverviewTab = activeTab === 'overview';
   const displayName = user?.nama || user?.email || 'Admin';
   const brandName = branding?.brandName || 'Sakura Mahar';
   const analytics = dashboard?.analytics || null;
@@ -194,6 +195,14 @@ const AdminPanel = ({
   const topPage = analyticsPages[0] || null;
   const maxTrafficViews = Math.max(...trafficWindow.map((entry) => Number(entry.pageViews || 0)), 1);
   const hasPerformanceData = websiteVisitors > 0 || websitePageViews > 0 || websiteLeads > 0 || websiteOrders > 0;
+  const productCount = siteContent?.products?.length ?? contentForm?.products?.length ?? 0;
+  const testimonialCount = siteContent?.testimonials?.length ?? contentForm?.testimonials?.length ?? 0;
+  const unreadMessageCount = overview.unreadMessages ?? messages.filter((item) => item.status === 'unread').length;
+  const activeOrderCount = overview.openOrders ?? orders.filter((item) => !['completed', 'cancelled'].includes(item.status)).length;
+  const completedOrderCount = orders.filter((item) => item.status === 'completed').length;
+  const activeUsersCount = overview.activeUsers ?? users.filter((item) => item.status === 'active').length;
+  const adminCount = overview.admins ?? users.filter((item) => item.role === 'admin').length;
+  const auditEntityCount = new Set(auditLogs.map((item) => item.entityType).filter(Boolean)).size;
   const performanceCards = [
     { id: 'visitors', label: 'Pengunjung', value: websiteVisitors, hint: 'unik' },
     { id: 'views', label: 'Page views', value: websitePageViews, hint: 'kunjungan' },
@@ -236,6 +245,34 @@ const AdminPanel = ({
     { id: 'messages', label: 'Balas Lead' },
     { id: 'media', label: 'Kelola Media' }
   ];
+  const compactHeaderStats = {
+    content: [
+      { id: 'products', label: 'Produk', value: formatMetricValue(productCount) },
+      { id: 'testimonials', label: 'Testimoni', value: formatMetricValue(testimonialCount) }
+    ],
+    users: [
+      { id: 'users', label: 'User', value: formatMetricValue(users.length) },
+      { id: 'activeUsers', label: 'Aktif', value: formatMetricValue(activeUsersCount) },
+      { id: 'admins', label: 'Admin', value: formatMetricValue(adminCount) }
+    ],
+    messages: [
+      { id: 'messages', label: 'Inbox', value: formatMetricValue(overview.messages ?? messages.length) },
+      { id: 'unreadMessages', label: 'Belum balas', value: formatMetricValue(unreadMessageCount) }
+    ],
+    orders: [
+      { id: 'orders', label: 'Order', value: formatMetricValue(overview.orders ?? orders.length) },
+      { id: 'activeOrders', label: 'Aktif', value: formatMetricValue(activeOrderCount) },
+      { id: 'completedOrders', label: 'Selesai', value: formatMetricValue(completedOrderCount) }
+    ],
+    media: [
+      { id: 'media', label: 'Media', value: formatMetricValue(mediaAssets.length) },
+      { id: 'products', label: 'Produk', value: formatMetricValue(productCount) }
+    ],
+    audit: [
+      { id: 'logs', label: 'Log', value: formatMetricValue(auditLogs.length) },
+      { id: 'entities', label: 'Entitas', value: formatMetricValue(auditEntityCount) }
+    ]
+  }[activeTab] || [];
 
   useEffect(() => {
     setContentForm(clone(normalizeContentValue(siteContent)));
@@ -593,6 +630,31 @@ const AdminPanel = ({
     </div>
   );
 
+  const renderCompactTopbar = () => (
+    <div className="admin-topbar admin-topbar-compact">
+      <div className="admin-page-header">
+        <div className="admin-page-copy">
+          <p className="admin-page-label">{activeTabConfig.label}</p>
+          <h1>{activeTabConfig.title}</h1>
+          <p>{activeTabConfig.description}</p>
+        </div>
+        <div className="admin-page-meta-grid">
+          <div className="admin-page-meta-card admin-page-meta-card-profile">
+            <span>Admin</span>
+            <strong>{displayName}</strong>
+            <small>{user.email}</small>
+          </div>
+          {compactHeaderStats.map((item) => (
+            <div key={item.id} className="admin-page-meta-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   const renderActiveTabContent = () => {
     if (isLoading) {
       return <div className="admin-empty">Memuat data panel admin...</div>;
@@ -719,37 +781,41 @@ const AdminPanel = ({
           </aside>
 
           <div className="admin-main">
-            <div className="admin-topbar">
-              <div className="admin-hero-grid">
-                <div className="admin-header">
-                  <h1>{activeTabConfig.title}</h1>
-                </div>
-                <div className="admin-header-side">
-                  <div className="admin-profile-card">
-                    <strong>{displayName}</strong>
-                    <small>{user.email}</small>
+            {isOverviewTab ? (
+              <div className="admin-topbar">
+                <div className="admin-hero-grid">
+                  <div className="admin-header">
+                    <p className="admin-page-label">Overview</p>
+                    <h1>{activeTabConfig.title}</h1>
+                    <p>{activeTabConfig.description}</p>
                   </div>
-                  <div className="admin-profile-card admin-profile-card-compact">
-                    <strong>{formatMetricValue(websiteVisitors)}</strong>
-                    <small>Pengunjung</small>
+                  <div className="admin-header-side">
+                    <div className="admin-profile-card">
+                      <strong>{displayName}</strong>
+                      <small>{user.email}</small>
+                    </div>
+                    <div className="admin-profile-card admin-profile-card-compact">
+                      <strong>{formatMetricValue(websiteVisitors)}</strong>
+                      <small>Pengunjung</small>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="admin-topbar-stats">
-                {summaryCards.map((card) => (
-                  <div key={card.id} className={`admin-topbar-stat tone-${card.tone}`}>
-                    <div className="admin-topbar-stat-icon">
-                      <i className={`fas ${card.icon}`}></i>
+                <div className="admin-topbar-stats">
+                  {summaryCards.map((card) => (
+                    <div key={card.id} className={`admin-topbar-stat tone-${card.tone}`}>
+                      <div className="admin-topbar-stat-icon">
+                        <i className={`fas ${card.icon}`}></i>
+                      </div>
+                      <div className="admin-topbar-stat-copy">
+                        <span>{card.label}</span>
+                        <strong>{formatMetricValue(card.value)}</strong>
+                      </div>
                     </div>
-                    <div className="admin-topbar-stat-copy">
-                      <span>{card.label}</span>
-                      <strong>{formatMetricValue(card.value)}</strong>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : renderCompactTopbar()}
 
             {status.message ? <div className={`admin-status ${status.type}`}>{status.message}</div> : null}
 

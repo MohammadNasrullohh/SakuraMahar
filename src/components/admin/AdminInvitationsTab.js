@@ -86,7 +86,7 @@ const AdminInvitationsTab = ({ invitations, filters, setFilter, newInvitation, s
           <option value="responded">responded</option>
         </select>
         <button type="button" className="btn-primary" onClick={() => { setMode('create'); setSelectedId(null); }}>Buat Undangan</button>
-        <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('invitations.csv', filteredInvitations.map((item) => ({ id: item.id, guestNama: item.guestNama, guestEmail: item.guestEmail, status: item.status, response: item.response || '', uniqueCode: item.uniqueCode })))}>Export CSV</button>
+        <button type="button" className="btn-secondary" onClick={() => exportRowsToCsv('invitations.csv', filteredInvitations.map((item) => ({ id: item.id, guestNama: item.guestNama, guestEmail: item.guestEmail, status: item.status, response: item.response || '', uniqueCode: item.uniqueCode })))}>Unduh CSV</button>
       </div>
 
       <div className="admin-sheet-layout">

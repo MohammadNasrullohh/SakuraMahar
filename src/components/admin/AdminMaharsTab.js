@@ -113,7 +113,7 @@ const AdminMaharsTab = ({
             )
           }
         >
-          Export CSV
+          Unduh CSV
         </button>
       </div>
 
@@ -121,8 +121,8 @@ const AdminMaharsTab = ({
         <section className="admin-sheet-card">
           <div className="admin-sheet-titlebar">
             <div>
-              <h3>Ledger Mahar</h3>
-              <p>{filteredMahars.length} transaksi mahar tersusun dalam grid yang lebih mudah dipindai.</p>
+              <h3>Data Mahar</h3>
+              <p>{filteredMahars.length} transaksi tercatat.</p>
             </div>
           </div>
           <AdminSheetTable

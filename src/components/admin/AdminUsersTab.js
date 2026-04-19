@@ -110,7 +110,7 @@ const AdminUsersTab = ({
             )
           }
         >
-          Export CSV
+          Unduh CSV
         </button>
       </div>
 
@@ -119,7 +119,7 @@ const AdminUsersTab = ({
           <div className="admin-sheet-titlebar">
             <div>
               <h3>Daftar User</h3>
-              <p>{filteredUsers.length} user tampil dalam tampilan spreadsheet.</p>
+              <p>{filteredUsers.length} akun tersedia.</p>
             </div>
           </div>
           <AdminSheetTable

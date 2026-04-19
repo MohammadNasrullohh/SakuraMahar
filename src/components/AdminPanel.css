@@ -228,6 +228,14 @@
   align-content: start;
 }
 
+.admin-page-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #db2777;
+}
+
 .admin-eyebrow {
   font-size: 12px;
   font-weight: 800;
@@ -257,6 +265,86 @@
   display: grid;
   gap: 12px;
   align-content: start;
+}
+
+.admin-topbar-compact {
+  padding: 20px 24px;
+}
+
+.admin-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-page-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-page-copy h1 {
+  font-size: clamp(30px, 3.5vw, 42px);
+  margin: 0;
+  color: #172033;
+  letter-spacing: -0.03em;
+}
+
+.admin-page-copy p {
+  margin: 0;
+  color: #607087;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+.admin-page-meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.admin-page-meta-card {
+  min-width: 148px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  background:
+    radial-gradient(circle at top right, rgba(236, 72, 153, 0.08), transparent 40%),
+    linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 6px;
+}
+
+.admin-page-meta-card-profile {
+  min-width: 260px;
+}
+
+.admin-page-meta-card span {
+  color: #7a8498;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.admin-page-meta-card strong {
+  color: #172033;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.admin-page-meta-card-profile strong {
+  color: #312e81;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.admin-page-meta-card small {
+  color: #5f6980;
+  overflow-wrap: anywhere;
 }
 
 .admin-active-tab-chip {
@@ -1267,6 +1355,14 @@
     grid-template-columns: 1fr;
   }
 
+  .admin-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-page-meta-grid {
+    justify-content: flex-start;
+  }
+
   .admin-sidebar-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1311,6 +1407,12 @@
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     justify-items: stretch;
+  }
+
+  .admin-page-meta-card,
+  .admin-page-meta-card-profile {
+    min-width: 0;
+    flex: 1 1 180px;
   }
 
   .admin-active-tab-chip {
