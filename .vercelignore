@@ -1,0 +1,5 @@
+.vercel/
+output/
+test-results/
+*.png
+!assets/*.png

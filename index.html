@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sakura Mahar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="assets/brand-symbol-transparent.png" />
+    <link rel="apple-touch-icon" href="assets/brand-symbol-transparent.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <a class="brand" href="#home" data-route="home" aria-label="Sakura Mahar beranda">
+        <span>Sakura</span>
+        <strong>Mahar</strong>
+      </a>
+
+      <button class="nav-toggle" type="button" aria-label="Buka menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="site-nav" aria-label="Navigasi utama">
+        <a href="#home" data-route="home">Beranda</a>
+        <a href="#catalog" data-route="catalog">Katalog</a>
+        <a href="#about" data-route="about">Tentang Kami</a>
+      </nav>
+
+      <div class="header-tools">
+        <label class="search-box" aria-label="Cari produk">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 5.3-2.2l3.7 3.7-1.4 1.4-3.7-3.7A7.4 7.4 0 0 1 10.5 18Zm0-2a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11Z" />
+          </svg>
+          <input id="siteSearch" type="search" placeholder="Cari Produk" autocomplete="off" />
+        </label>
+
+        <button class="icon-button" type="button" data-route="catalog" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21s-7.5-4.6-9.4-9.3C1.3 8.4 3.2 5 6.7 5c2 0 3.4 1 4.2 2.2C11.7 6 13.1 5 15.1 5c3.5 0 5.4 3.4 4.1 6.7C17.5 16.4 12 21 12 21Zm0-2.4c2-1.4 4.7-4 5.5-7.6.8-2.1-.2-4-2.4-4-1.7 0-2.7 1-3.2 2.6h-1.8C9.7 8 8.6 7 6.9 7c-2.2 0-3.3 1.9-2.4 4 1 3.3 4.2 6.2 7.5 7.6Z" />
+          </svg>
+        </button>
+
+        <button class="icon-button cart-button" type="button" data-route="checkout" aria-label="Keranjang">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 22a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm10 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM4.1 4H2V2h3.6l1.2 3h13.7l-2 8.2a3 3 0 0 1-2.9 2.3H8.1A3 3 0 0 1 5.2 13L4.1 4Zm3.4 3 1.4 5.5a1 1 0 0 0 1 .8h5.7a1 1 0 0 0 1-.8L17.9 7H7.5Z" />
+          </svg>
+          <span id="cartCount">0</span>
+        </button>
+
+        <button class="account-chip" type="button" data-route="login" aria-label="Masuk akun">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z" />
+          </svg>
+          <span>Masuk</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="app" tabindex="-1"></main>
+
+    <a href="https://wa.me/6285932884293" class="floating-wa" target="_blank" rel="noreferrer" aria-label="Chat WhatsApp">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M17.47 16.03c-.22-.11-1.28-.63-1.48-.7-.2-.07-.35-.11-.5.11-.15.22-.57.7-.7.84-.13.15-.26.17-.48.06-.22-.11-.91-.34-1.74-1.07-.64-.57-1.07-1.28-1.2-1.5s-.01-.35.1-.46c.1-.1.22-.26.33-.39.11-.13.15-.22.22-.37.07-.15.03-.28-.02-.39s-.5-1.21-.68-1.66c-.18-.44-.36-.38-.5-.39h-.42c-.15 0-.39.06-.6.28-.21.22-.8.78-.8 1.9s.82 2.21.93 2.36c.11.15 1.61 2.46 3.9 3.44.54.23.96.37 1.29.47.54.17 1.03.15 1.42.09.43-.07 1.28-.52 1.46-1.03.18-.51.18-.95.13-1.04-.05-.1-.19-.15-.41-.26Zm4.1-13.6A11.95 11.95 0 0 0 12 0C5.38 0 0 5.38 0 12c0 2.12.55 4.19 1.6 6.01L0 24l6.14-1.61C7.9 23.45 9.92 24 12 24c6.62 0 12-5.38 12-12 0-3.2-1.25-6.22-3.52-8.48h.01ZM12 21.98c-1.8 0-3.56-.48-5.11-1.4l-.37-.22-3.8 1 .99-3.7-.24-.38A9.95 9.95 0 0 1 2 12c0-5.51 4.49-10 10-10 5.51 0 10 4.49 10 10s-4.49 10-10 10Z"/></svg>
+    </a>
+
+    <footer class="site-footer">
+      <div>
+        <a class="footer-brand" href="#home" data-route="home">
+          <img src="assets/brand-symbol-transparent.png" alt="" />
+          <span>Sakura Mahar</span>
+        </a>
+        <p>
+          Toko mahar custom yang fokus pada bingkai mahar, hantaran, seserahan, dan
+          packing wajib dengan proses order yang rapi.
+        </p>
+      </div>
+      <div>
+        <h2>Jelajahi</h2>
+        <a href="#home" data-route="home">Beranda</a>
+        <a href="#catalog" data-route="catalog">Katalog</a>
+        <a href="#about" data-route="about">Tentang Kami</a>
+        <a href="#login" data-route="login">Chat</a>
+        <a href="#catalog" data-route="catalog">Cari Produk</a>
+      </div>
+      <div>
+        <h2>Hubungi</h2>
+        <div class="social-row" aria-label="Media sosial">
+          <a href="https://www.instagram.com/" aria-label="Instagram" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm4.2 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6Zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Zm5-1.6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0Z" />
+            </svg>
+          </a>
+          <a href="https://wa.me/6285932884293" aria-label="WhatsApp" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2a10 10 0 0 1 8.4 15.4L22 22l-4.8-1.5A10 10 0 1 1 12 2Zm0 2a8 8 0 0 0-6.8 12.2l.3.5-.8 2.5 2.6-.8.5.3A8 8 0 1 0 12 4Zm-3.1 4.1c.3-.3.7-.3 1-.1.2.2.9 1.2 1 1.5.1.3.1.6-.1.9l-.5.6c.5 1 1.3 1.8 2.2 2.4.8.5 1.5.8 1.9.8.2 0 .4 0 .5-.2l.6-.7c.2-.3.6-.3.9-.2.3.1 1.5.7 1.8.9.2.2.3.5.2.8-.2.8-.9 1.7-1.7 1.9-.7.2-2 .1-4.4-1.2-2.9-1.5-4.8-4.2-5-5.7-.1-.9.7-1.7 1.6-1.7Z" />
+            </svg>
+          </a>
+          <a href="#catalog" data-route="catalog" aria-label="Shopee">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 7V6a5 5 0 0 1 10 0v1h2.2l.8 13H4L4.8 7H7Zm2 0h6V6a3 3 0 0 0-6 0v1Zm3 4c-1 0-1.6.5-1.6 1.1 0 .5.4.8 1.4 1.1 1.8.5 2.9 1.3 2.9 2.8 0 1.4-1 2.5-2.7 2.8V20h-1.6v-1.2a5.4 5.4 0 0 1-2.5-1l.8-1.6c.8.5 1.6.8 2.4.8 1 0 1.5-.4 1.5-1 0-.6-.5-.9-1.6-1.2-1.8-.5-2.7-1.3-2.7-2.7 0-1.3.9-2.4 2.6-2.7V8h1.6v1.3c.9.1 1.7.4 2.2.8l-.8 1.6a4 4 0 0 0-1.9-.7Z" />
+            </svg>
+          </a>
+          <a href="https://maps.google.com/" aria-label="Lokasi" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2a7 7 0 0 1 7 7c0 5.2-7 13-7 13S5 14.2 5 9a7 7 0 0 1 7-7Zm0 2a5 5 0 0 0-5 5c0 2.9 3.1 7.5 5 10 1.9-2.5 5-7.1 5-10a5 5 0 0 0-5-5Zm0 2.7A2.3 2.3 0 1 1 12 11.3a2.3 2.3 0 0 1 0-4.6Z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+      <p class="copyright">© 2026 Sakura Mahar. Semua Hak Dilindungi.</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
