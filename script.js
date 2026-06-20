@@ -1347,6 +1347,20 @@ function renderAccount() {
                 : `<div class="account-empty">Belum ada pesanan di akun ini.</div>`
             }
           </article>
+          <article class="account-card account-chat-card">
+            <h2>Live Chat dengan Seller</h2>
+            <div class="chat-messages" id="userChatMessages" aria-live="polite">
+              <div class="chat-loading">Memuat chat...</div>
+            </div>
+            <form class="chat-input-form" id="userChatForm">
+              <input type="text" name="message" placeholder="Tanya tentang pesanan Anda..." required autocomplete="off" />
+              <button type="submit" aria-label="Kirim Pesan" class="send-btn">
+                <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              </button>
+            </form>
+          </article>
         </div>
       </div>
     </section>
@@ -1626,7 +1640,22 @@ function renderAdminProfile() {
       </div>
     </form>
     
-    <div class="admin-profile-form new-form qris-form-container">
+    <div class="admin-profile-form new-form wa-bot-form-container" style="margin-top: 2rem;">
+      <div class="profile-section">
+        <div class="qris-header" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.93.55 3.73 1.5 5.23L2 22l4.82-1.48A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.63 0-3.17-.39-4.54-1.07l-.33-.16-3.37 1.04.9-3.23-.18-.34A7.95 7.95 0 014 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
+          <h3>WhatsApp Bot Pairing</h3>
+        </div>
+        <p class="section-desc" style="margin-bottom:1rem;">Masukkan nomor WhatsApp (diawali 62) untuk mendapatkan kode pairing bot. Pastikan bot Node.js sudah berjalan di terminal Anda.</p>
+        <div class="form-row" style="display: flex; gap: 15px; align-items: stretch;">
+          <input type="text" id="waBotNumberInput" placeholder="Contoh: 62812345678" style="padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); flex: 1; outline: none; font-size: 0.95rem;" />
+          <button type="button" id="btnRequestPairing" class="btn-solid-pink" style="white-space: nowrap; margin-top: 0; padding: 0 1.5rem;">Dapatkan Kode</button>
+        </div>
+        <div id="waBotPairingCode" style="margin-top: 15px; font-weight: bold; font-size: 1.5rem; color: var(--primary-color); letter-spacing: 2px;"></div>
+      </div>
+    </div>
+
+    <div class="admin-profile-form new-form qris-form-container" style="margin-top: 2rem;">
       <div class="profile-section qris-section">
         <div class="qris-header">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3zM15 15h6v6h-6z"/></svg>
@@ -2028,6 +2057,14 @@ function bindPageEvents() {
       render();
     });
   }
+
+  const userChatForm = app.querySelector("#userChatForm");
+  if (userChatForm) {
+    userChatForm.addEventListener("submit", handleUserChatSubmit);
+    if (typeof initChatListener === "function") initChatListener();
+  }
+
+  if (typeof initWABotAdminEvents === "function") initWABotAdminEvents();
 }
 
 function render() {
@@ -2094,4 +2131,105 @@ window.handleImagePreview = function(event) {
     reader.readAsDataURL(file);
   }
 };
+
+
+// ====== WA BOT PAIRING & CHAT ====== 
+
+function initChatListener() {
+  const messagesContainer = document.getElementById("userChatMessages");
+  if (!messagesContainer || !state.user || !db) return;
+
+  if (window.chatUnsubscribe) window.chatUnsubscribe();
+  
+  window.chatUnsubscribe = db.collection("chats").doc(state.user.id).collection("messages")
+    .orderBy("timestamp", "asc")
+    .onSnapshot((snapshot) => {
+      messagesContainer.innerHTML = "";
+      if (snapshot.empty) {
+        messagesContainer.innerHTML = `<div class="chat-loading">Belum ada pesan. Mulai percakapan dengan penjual.</div>`;
+        return;
+      }
+      
+      snapshot.forEach((doc) => {
+        const msg = doc.data();
+        const div = document.createElement("div");
+        div.className = `chat-message ${msg.sender === "user" ? "user" : "seller"}`;
+        
+        let timeString = "";
+        if (msg.timestamp) {
+          const date = msg.timestamp.toDate();
+          timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        div.innerHTML = `
+          ${escapeHtml(msg.text)}
+          <span class="chat-message-time">${timeString}</span>
+        `;
+        messagesContainer.appendChild(div);
+      });
+      
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+}
+
+function handleUserChatSubmit(e) {
+  e.preventDefault();
+  if (!state.user || !db) return;
+  
+  const form = e.target;
+  const input = form.message;
+  const text = input.value.trim();
+  if (!text) return;
+  
+  input.disabled = true;
+  
+  db.collection("chats").doc(state.user.id).collection("messages").add({
+    text: text,
+    sender: "user",
+    userEmail: state.user.email,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    input.value = "";
+    input.disabled = false;
+    input.focus();
+  }).catch((err) => {
+    console.error("Error sending message:", err);
+    input.disabled = false;
+  });
+}
+
+function initWABotAdminEvents() {
+  const btnRequestPairing = document.querySelector("#btnRequestPairing");
+  if (btnRequestPairing) {
+    btnRequestPairing.addEventListener("click", () => {
+      const phoneInput = document.querySelector("#waBotNumberInput");
+      const phone = phoneInput.value.trim();
+      if (!phone) return alert("Masukkan nomor WhatsApp (diawali 62)!");
+      if (!db) return alert("Database Firebase belum terhubung!");
+
+      const display = document.querySelector("#waBotPairingCode");
+      display.textContent = "Meminta kode ke bot...";
+      
+      db.collection("settings").doc("wa-bot").set({
+        phone: phone,
+        status: "requesting",
+        code: null
+      }, { merge: true }).then(() => {
+        const unsub = db.collection("settings").doc("wa-bot").onSnapshot(doc => {
+          const data = doc.data();
+          if (data && data.code) {
+            display.textContent = "Kode: " + data.code;
+            unsub();
+          } else if (data && data.status === "error") {
+            display.textContent = "Error: " + data.error;
+            unsub();
+          }
+        });
+      }).catch(err => {
+        display.textContent = "Error Firestore: " + err.message;
+      });
+    });
+  }
+}
+
 
