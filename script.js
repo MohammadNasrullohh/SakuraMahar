@@ -9,11 +9,9 @@ const firebaseConfig = {
 };
 
   let db = null;
-  let storage = null;
   if (typeof firebase !== "undefined") {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
-    storage = firebase.storage();
   }
 
 let allOrdersFirebase = [];
