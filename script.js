@@ -8,11 +8,13 @@ const firebaseConfig = {
   appId: "1:432942356126:web:155f55f70bb341dd4ecd8f"
 };
 
-let db = null;
-if (typeof firebase !== "undefined") {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-}
+  let db = null;
+  let storage = null;
+  if (typeof firebase !== "undefined") {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    storage = firebase.storage();
+  }
 
 let allOrdersFirebase = [];
 try {
@@ -1353,7 +1355,13 @@ function renderAccount() {
               <div class="chat-loading">Memuat chat...</div>
             </div>
             <form class="chat-input-form" id="userChatForm">
-              <input type="text" name="message" placeholder="Tanya tentang pesanan Anda..." required autocomplete="off" />
+              <input type="file" id="chatImageInput" accept="image/*" hidden />
+              <button type="button" aria-label="Lampirkan Gambar" class="attach-btn" onclick="document.getElementById('chatImageInput').click()">
+                <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+              </button>
+              <input type="text" name="message" placeholder="Tanya tentang pesanan Anda..." autocomplete="off" />
               <button type="submit" aria-label="Kirim Pesan" class="send-btn">
                 <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="currentColor">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -1936,8 +1944,13 @@ function bindPageEvents() {
 
   app.querySelectorAll("[data-confirm-order]").forEach((element) => {
     element.addEventListener("click", () => {
-      createOrderFromState();
-      navigate("confirmation");
+      try {
+        createOrderFromState();
+        navigate("confirmation");
+      } catch (err) {
+        console.error(err);
+        alert("Mohon maaf, terjadi kesalahan saat memproses pesanan Anda: " + err.message);
+      }
     });
   });
 
@@ -2062,6 +2075,11 @@ function bindPageEvents() {
   if (userChatForm) {
     userChatForm.addEventListener("submit", handleUserChatSubmit);
     if (typeof initChatListener === "function") initChatListener();
+    
+    const chatImageInput = app.querySelector("#chatImageInput");
+    if (chatImageInput) {
+      chatImageInput.addEventListener("change", handleChatImageUpload);
+    }
   }
 
   if (typeof initWABotAdminEvents === "function") initWABotAdminEvents();
@@ -2162,7 +2180,8 @@ function initChatListener() {
         }
         
         div.innerHTML = `
-          ${escapeHtml(msg.text)}
+          ${msg.imageUrl ? `<img src="${msg.imageUrl}" alt="Lampiran" class="chat-attachment" onclick="window.open(this.src, '_blank')" style="cursor: pointer;" />` : ''}
+          ${msg.text ? `<p style="margin: 0;">${escapeHtml(msg.text)}</p>` : ''}
           <span class="chat-message-time">${timeString}</span>
         `;
         messagesContainer.appendChild(div);
@@ -2187,6 +2206,7 @@ function handleUserChatSubmit(e) {
     text: text,
     sender: "user",
     userEmail: state.user.email,
+    userName: state.user.name || "Pelanggan",
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   }).then(() => {
     input.value = "";
@@ -2196,6 +2216,74 @@ function handleUserChatSubmit(e) {
     console.error("Error sending message:", err);
     input.disabled = false;
   });
+}
+
+async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = event => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = error => reject(error);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+async function handleChatImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!state.user || !db) return alert("Sistem belum siap, coba lagi sebentar.");
+
+  const messagesContainer = document.querySelector(".chat-messages");
+  const loadingDiv = document.createElement("div");
+  loadingDiv.className = "chat-loading";
+  loadingDiv.textContent = "Mengunggah gambar...";
+  messagesContainer.appendChild(loadingDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  try {
+    const base64Data = await compressImage(file);
+    
+    // Kirim base64 ke Firestore. Bot WA akan menangkapnya, mengunggah ke Storage yang sesungguhnya
+    await db.collection("chats").doc(state.user.id).collection("messages").add({
+      text: "",
+      imageUrl: base64Data,
+      sender: "user",
+      userEmail: state.user.email,
+      userName: state.user.name || "Pelanggan",
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    console.error("Error uploading image:", err);
+    alert("Gagal mengunggah gambar. Gambar terlalu besar atau format tidak didukung.");
+  } finally {
+    if (loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
+    e.target.value = ""; // Reset file input
+  }
 }
 
 function initWABotAdminEvents() {
