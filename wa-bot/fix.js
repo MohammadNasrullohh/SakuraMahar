@@ -1,0 +1,1 @@
+const fs = require('fs'); let data = fs.readFileSync('index.js', 'utf8'); data = data.replace('const userEmail = data.userEmail || "Unknown";', 'const userEmail = data.userEmail || "Unknown";\n        const userName = data.userName || "Pelanggan";'); data = data.replace('Pesan Baru dari User ()', 'Pesan Baru dari User ( - )'); fs.writeFileSync('index.js', data);
