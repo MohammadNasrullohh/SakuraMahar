@@ -1352,6 +1352,10 @@ function renderAccount() {
             <div class="chat-messages" id="userChatMessages" aria-live="polite">
               <div class="chat-loading">Memuat chat...</div>
             </div>
+            <div id="chatImagePreview" style="display: none; padding: 12px; border-top: 1px solid var(--border-color); position: relative; background: #f9f9f9;">
+              <img id="chatImagePreviewImg" src="" style="max-height: 80px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+              <button type="button" id="chatImagePreviewRemove" aria-label="Hapus gambar" style="position: absolute; top: 4px; left: 85px; background: var(--primary-color); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">✕</button>
+            </div>
             <form class="chat-input-form" id="userChatForm">
               <input type="file" id="chatImageInput" accept="image/*" hidden />
               <button type="button" aria-label="Lampirkan Gambar" class="attach-btn" onclick="document.getElementById('chatImageInput').click()">
@@ -2078,6 +2082,14 @@ function bindPageEvents() {
     if (chatImageInput) {
       chatImageInput.addEventListener("change", handleChatImageUpload);
     }
+    const removeBtn = app.querySelector("#chatImagePreviewRemove");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", () => {
+        pendingChatImageBase64 = null;
+        app.querySelector("#chatImagePreview").style.display = "none";
+        app.querySelector("#chatImageInput").value = "";
+      });
+    }
   }
 
   if (typeof initWABotAdminEvents === "function") initWABotAdminEvents();
@@ -2189,6 +2201,8 @@ function initChatListener() {
     });
 }
 
+let pendingChatImageBase64 = null;
+
 function handleUserChatSubmit(e) {
   e.preventDefault();
   if (!state.user || !db) return;
@@ -2196,23 +2210,41 @@ function handleUserChatSubmit(e) {
   const form = e.target;
   const input = form.message;
   const text = input.value.trim();
-  if (!text) return;
+  const image = pendingChatImageBase64;
+  
+  if (!text && !image) return;
   
   input.disabled = true;
+  form.querySelector(".send-btn").disabled = true;
   
-  db.collection("chats").doc(state.user.id).collection("messages").add({
+  const msgData = {
     text: text,
     sender: "user",
     userEmail: state.user.email,
     userName: state.user.name || "Pelanggan",
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
+  };
+
+  if (image) {
+    msgData.imageUrl = image;
+  }
+  
+  db.collection("chats").doc(state.user.id).collection("messages").add(msgData).then(() => {
     input.value = "";
     input.disabled = false;
+    form.querySelector(".send-btn").disabled = false;
     input.focus();
+    
+    pendingChatImageBase64 = null;
+    const previewContainer = document.querySelector("#chatImagePreview");
+    if (previewContainer) previewContainer.style.display = "none";
+    const fileInput = document.querySelector("#chatImageInput");
+    if (fileInput) fileInput.value = "";
   }).catch((err) => {
     console.error("Error sending message:", err);
     input.disabled = false;
+    form.querySelector(".send-btn").disabled = false;
+    alert("Gagal mengirim pesan.");
   });
 }
 
@@ -2254,33 +2286,26 @@ async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.
 async function handleChatImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  if (!state.user || !db) return alert("Sistem belum siap, coba lagi sebentar.");
 
-  const messagesContainer = document.querySelector(".chat-messages");
-  const loadingDiv = document.createElement("div");
-  loadingDiv.className = "chat-loading";
-  loadingDiv.textContent = "Mengunggah gambar...";
-  messagesContainer.appendChild(loadingDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  const btn = document.querySelector("#chatImagePreviewRemove");
+  if (btn) btn.disabled = true;
 
   try {
     const base64Data = await compressImage(file);
+    pendingChatImageBase64 = base64Data;
     
-    // Kirim base64 ke Firestore. Bot WA akan menangkapnya, mengunggah ke Storage yang sesungguhnya
-    await db.collection("chats").doc(state.user.id).collection("messages").add({
-      text: "",
-      imageUrl: base64Data,
-      sender: "user",
-      userEmail: state.user.email,
-      userName: state.user.name || "Pelanggan",
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const previewContainer = document.querySelector("#chatImagePreview");
+    const previewImg = document.querySelector("#chatImagePreviewImg");
+    if (previewContainer && previewImg) {
+      previewImg.src = base64Data;
+      previewContainer.style.display = "block";
+    }
   } catch (err) {
-    console.error("Error uploading image:", err);
-    alert("Gagal mengunggah gambar. Gambar terlalu besar atau format tidak didukung.");
+    console.error("Error compressing image:", err);
+    alert("Gagal memproses gambar. Gambar terlalu besar atau format tidak didukung.");
+    e.target.value = "";
   } finally {
-    if (loadingDiv.parentNode) loadingDiv.parentNode.removeChild(loadingDiv);
-    e.target.value = ""; // Reset file input
+    if (btn) btn.disabled = false;
   }
 }
 
