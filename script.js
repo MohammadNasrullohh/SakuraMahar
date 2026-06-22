@@ -2045,7 +2045,8 @@ function bindPageEvents() {
         for (const [key, value] of formData.entries()) {
           if (value instanceof File) {
             if (value.size > 0) {
-              data[key] = await compressImage(value);
+              // Kompres lebih kecil agar tidak memenuhi localStorage dan Firestore
+              data[key] = await compressImage(value, 600, 600, 0.6);
             } else {
               data[key] = ""; // ignore empty file inputs
             }
@@ -2056,12 +2057,16 @@ function bindPageEvents() {
         
         state.orderData = data;
         state.currentOrderId = null;
-        writeStorage("sakuraMaharOrderData", state.orderData);
+        try {
+          writeStorage("sakuraMaharOrderData", state.orderData);
+        } catch (storageErr) {
+          console.warn("Gagal menyimpan ke local storage (mungkin penuh):", storageErr);
+        }
         localStorage.removeItem("sakuraMaharCurrentOrderId");
         navigate("payment");
       } catch (err) {
         console.error("Gagal memproses form pesanan:", err);
-        alert("Gagal memproses form pesanan. Pastikan gambar yang diupload valid.");
+        alert("Gagal memproses form pesanan: " + (err.message || err));
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
