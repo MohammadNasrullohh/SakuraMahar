@@ -331,6 +331,7 @@ function createOrderFromState() {
 
   saveOrders([order, ...getOrders()]);
   state.currentOrderId = order.id;
+  state.lastCreatedOrder = order;
   writeStorage("sakuraMaharCurrentOrderId", order.id);
   return order;
 }
@@ -1212,7 +1213,12 @@ function renderPayment() {
 function renderConfirmation() {
   const { product, quantity } = orderProduct();
   if (!product) return renderEmptyShop("Keranjang masih kosong.");
-  const order = state.currentOrderId ? getOrders().find((entry) => entry.id === state.currentOrderId) : null;
+  
+  let order = state.currentOrderId ? getOrders().find((entry) => entry.id === state.currentOrderId) : null;
+  if (!order && state.lastCreatedOrder && state.lastCreatedOrder.id === state.currentOrderId) {
+    order = state.lastCreatedOrder;
+  }
+  
   const total = product.price * quantity;
   const buyerName =
     order?.customerName ||
@@ -1231,7 +1237,7 @@ function renderConfirmation() {
           <h1>Pesanan Dikonfirmasi!</h1>
           <p>Terima Kasih Telah Mempercayakan Mahar Pernikahanmu Kepada Kami. Tim Kami Akan Segera Menghubungi Kamu.</p>
           <div class="confirmation-summary">
-            <div><span>No. Pesanan</span><strong>${escapeHtml(order?.id || "MHR-44072")}</strong></div>
+            <div><span>No. Pesanan</span><strong>${escapeHtml(order?.id || state.currentOrderId || "Memproses...")}</strong></div>
             <div><span>Nama</span><strong>${escapeHtml(buyerName)}</strong></div>
             <div><span>Produk</span><strong>${escapeHtml(order?.productName || product.name)}</strong></div>
             <div><span>Pengambilan</span><strong>${escapeHtml(order?.pickupMethod || state.pickupMethod)}</strong></div>
