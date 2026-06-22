@@ -1301,7 +1301,6 @@ function renderAccount() {
     if (order.userId) return order.userId === state.user.id;
     return order.email && order.email === state.user.email;
   });
-  const profile = getStoreProfile();
 
   return `
     <section class="shop-page account-page">
@@ -1339,15 +1338,6 @@ function renderAccount() {
                               <strong>${escapeHtml(order.id)}</strong>
                               <span>${escapeHtml(order.productName)}</span>
                               <small>${escapeHtml(order.status)} • ${formatPrice(order.total)}</small>
-                              ${order.status === "Belum Dibayar" && !order.paymentProof ? `
-                                <div class="payment-actions" style="margin-top: 8px; display: flex; gap: 6px;">
-                                  ${profile.qrisImage ? `<button type="button" class="btn-solid-pink" style="padding: 4px 8px; font-size: 11px;" onclick="window.open('${profile.qrisImage}', '_blank')">Lihat QRIS</button>` : ''}
-                                  <button type="button" class="btn-outline-pink" style="padding: 4px 8px; font-size: 11px;" onclick="document.getElementById('tf-${order.id}').click()">Upload Bukti TF</button>
-                                  <input type="file" id="tf-${order.id}" accept="image/*" style="display: none;" onchange="window.handlePaymentProofUpload(event, '${order.id}')" />
-                                </div>
-                              ` : order.paymentProof && order.status === "Belum Dibayar" ? `
-                                <div style="margin-top: 8px; font-size: 12px; color: var(--primary-color); font-weight: 600;">✓ Menunggu Konfirmasi Admin</div>
-                              ` : ''}
                             </div>
                           </div>
                         `
@@ -1530,14 +1520,14 @@ function renderAdminOrders() {
                 const isUnpaid = order.status === "Belum Dibayar";
                 const isProcessing = order.status === "Diproses";
                 const isDone = order.status === "Selesai";
-                const badgeText = isUnpaid ? (order.paymentProof ? "Tunggu Konfirmasi" : "Belum Bayar") : order.status;
-                const badgeClass = order.status.replace(/\s+/g, '-').toLowerCase();
+                const badgeText = isUnpaid ? "Belum Bayar" : order.status;
+                const badgeClass = order.status.replace(/\\s+/g, '-').toLowerCase();
 
                 return `
                   <article class="admin-order-card new-card">
                     <div class="card-header">
                       <strong>${escapeHtml(order.customerName)}</strong>
-                      <span class="status-badge ${badgeClass}" ${order.paymentProof && isUnpaid ? 'style="background: var(--primary-color); color: white;"' : ''}>${badgeText}</span>
+                      <span class="status-badge ${badgeClass}">${badgeText}</span>
                     </div>
                     <p class="product-name">${escapeHtml(order.productName)}</p>
                     
@@ -1547,14 +1537,8 @@ function renderAdminOrders() {
                         ${isUnpaid ? `
                           <div class="unpaid-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                             <strong class="price-val">${formatPrice(order.total)}</strong>
-                            <div class="button-group-vertical" style="display: flex; flex-direction: column; gap: 6px;">
-                              ${order.paymentProof ? `
-                                <button type="button" class="btn-outline-pink" onclick="window.open('${order.paymentProof}', '_blank')" style="padding: 6px 12px; font-size: 12px;">
-                                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                  Lihat Bukti TF
-                                </button>
-                              ` : ''}
-                              <button type="button" class="btn-solid-pink" data-order-status="${escapeHtml(order.id)}" data-status="Diproses" ${!order.paymentProof ? 'title="Belum ada bukti TF"' : ''}>
+                            <div class="button-group-vertical">
+                              <button type="button" class="btn-solid-pink" data-order-status="${escapeHtml(order.id)}" data-status="Diproses">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
                                 Konfirmasi & Proses
                               </button>
@@ -2324,35 +2308,6 @@ async function handleChatImageUpload(e) {
     if (btn) btn.disabled = false;
   }
 }
-
-window.handlePaymentProofUpload = async function(e, orderId) {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const base64Data = await compressImage(file);
-    const orders = getOrders();
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) return;
-    
-    orders[orderIndex].paymentProof = base64Data;
-    saveOrders(orders);
-    
-    if (db && state.user) {
-      const orderDoc = await db.collection("orders").doc(orderId).get();
-      if (orderDoc.exists) {
-        await db.collection("orders").doc(orderId).update({
-          paymentProof: base64Data,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    }
-    alert("Bukti transfer berhasil diunggah! Menunggu konfirmasi admin.");
-    render();
-  } catch (err) {
-    console.error("Gagal mengunggah bukti tf:", err);
-    alert("Gagal mengunggah gambar. Pastikan ukurannya tidak terlalu besar.");
-  }
-};
 
 function initWABotAdminEvents() {
   const btnRequestPairing = document.querySelector("#btnRequestPairing");
