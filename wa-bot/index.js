@@ -95,7 +95,10 @@ client.on("message_create", async (msg) => {
 
   // Status Pesanan Command
   if (text.startsWith("#status ")) {
-    const orderId = text.replace("#status ", "").trim();
+    let orderId = msg.body.trim().substring(8).trim();
+    if (orderId.toLowerCase().startsWith("mhr-")) {
+      orderId = "MHR-" + orderId.substring(4);
+    }
     if (!orderId) {
       client.sendMessage(chatId, `⚠️ Format salah. Gunakan: #status [Nomor Pesanan]`);
       return;
