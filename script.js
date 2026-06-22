@@ -2030,13 +2030,44 @@ function bindPageEvents() {
 
   const orderForm = app.querySelector("#orderForm");
   if (orderForm) {
-    orderForm.addEventListener("submit", (event) => {
+    orderForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      state.orderData = Object.fromEntries(new FormData(orderForm).entries());
-      state.currentOrderId = null;
-      writeStorage("sakuraMaharOrderData", state.orderData);
-      localStorage.removeItem("sakuraMaharCurrentOrderId");
-      navigate("payment");
+      
+      const submitBtn = document.querySelector(`button[form="orderForm"]`);
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Memproses...";
+      }
+
+      try {
+        const formData = new FormData(orderForm);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            if (value.size > 0) {
+              data[key] = await compressImage(value);
+            } else {
+              data[key] = ""; // ignore empty file inputs
+            }
+          } else {
+            data[key] = value;
+          }
+        }
+        
+        state.orderData = data;
+        state.currentOrderId = null;
+        writeStorage("sakuraMaharOrderData", state.orderData);
+        localStorage.removeItem("sakuraMaharCurrentOrderId");
+        navigate("payment");
+      } catch (err) {
+        console.error("Gagal memproses form pesanan:", err);
+        alert("Gagal memproses form pesanan. Pastikan gambar yang diupload valid.");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Lanjutkan Pembayaran";
+        }
+      }
     });
   }
 
