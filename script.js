@@ -306,7 +306,10 @@ function getStoreProfile() {
       { day: "Sabtu", open: "09.00", close: "16.00", isClosed: false },
       { day: "Minggu", open: "09.00", close: "16.00", isClosed: true }
     ],
-    qrisImage: ""
+    qrisImage: "",
+    instagramUrl: "https://www.instagram.com/",
+    shopeeUrl: "",
+    mapsUrl: "https://maps.google.com/"
   };
   const profile = readStorage("sakuraMaharStoreProfile", defaultProfile);
   if (typeof profile.hours === "string") {
@@ -1675,7 +1678,15 @@ function renderAdminProfile() {
         <label>Alamat Toko<input name="address" required placeholder="Masukan Alamat Toko" value="${escapeHtml(profile.address)}" /></label>
         <label>No. Telepon<input name="phone" required placeholder="Masukan No. Telepon Toko" value="${escapeHtml(profile.phone)}" /></label>
         <label>Instagram Toko<input name="instagram" required placeholder="Masukan Link Instagram Toko" value="${escapeHtml(profile.instagram)}" /></label>
-        <label>Shopee Toko..<input name="shopee" required placeholder="Masukan Link Shopee Toko" value="${escapeHtml(profile.shopee)}" /></label>
+        <label>Shopee Toko<input name="shopee" required placeholder="Masukan Link Shopee Toko" value="${escapeHtml(profile.shopee)}" /></label>
+      </div>
+
+      <div class="profile-section">
+        <h3 class="section-title">Link Sosial Media</h3>
+        <p class="section-desc">Link ini akan muncul di footer website.</p>
+        <label>Link Instagram<input name="instagramUrl" placeholder="https://www.instagram.com/sakuramahar" value="${escapeHtml(profile.instagramUrl || '')}" /></label>
+        <label>Link Shopee<input name="shopeeUrl" placeholder="https://shopee.co.id/sakuramahar" value="${escapeHtml(profile.shopeeUrl || '')}" /></label>
+        <label>Link Google Maps<input name="mapsUrl" placeholder="https://maps.google.com/..." value="${escapeHtml(profile.mapsUrl || '')}" /></label>
       </div>
 
       <div class="profile-section">
@@ -1870,6 +1881,9 @@ function handleStoreProfileSubmit(event) {
     phone: formData.get("phone"),
     instagram: formData.get("instagram"),
     shopee: formData.get("shopee"),
+    instagramUrl: formData.get("instagramUrl") || "",
+    shopeeUrl: formData.get("shopeeUrl") || "",
+    mapsUrl: formData.get("mapsUrl") || "",
     hours: [
       "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"
     ].map((day, i) => ({
@@ -2240,6 +2254,44 @@ function render() {
   bindPageEvents();
   updateCartCount();
   updateAccountChip();
+  renderFooterSocials();
+  initScrollReveal();
+}
+
+function renderFooterSocials() {
+  const row = document.getElementById("footerSocialRow");
+  if (!row) return;
+  const profile = getStoreProfile();
+  const svgIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm4.2 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6Zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Zm5-1.6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0Z"/></svg>';
+  const svgShopee = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7V6a5 5 0 0 1 10 0v1h2.2l.8 13H4L4.8 7H7Zm2 0h6V6a3 3 0 0 0-6 0v1Z"/></svg>';
+  const svgMaps = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5.2-7 13-7 13S5 14.2 5 9a7 7 0 0 1 7-7Zm0 2a5 5 0 0 0-5 5c0 2.9 3.1 7.5 5 10 1.9-2.5 5-7.1 5-10a5 5 0 0 0-5-5Zm0 2.7A2.3 2.3 0 1 1 12 11.3a2.3 2.3 0 0 1 0-4.6Z"/></svg>';
+  let html = '';
+  if (profile.instagramUrl) html += `<a href="${escapeHtml(profile.instagramUrl)}" aria-label="Instagram" target="_blank" rel="noreferrer">${svgIG}</a>`;
+  if (profile.shopeeUrl) html += `<a href="${escapeHtml(profile.shopeeUrl)}" aria-label="Shopee" target="_blank" rel="noreferrer">${svgShopee}</a>`;
+  if (profile.mapsUrl) html += `<a href="${escapeHtml(profile.mapsUrl)}" aria-label="Lokasi" target="_blank" rel="noreferrer">${svgMaps}</a>`;
+  row.innerHTML = html;
+}
+
+function initScrollReveal() {
+  const elements = app.querySelectorAll('.product-card, .catalog-card, .admin-order-card, .admin-product-card, .about-value-card, .hero-content, .section-title, .product-detail-card, .admin-profile-form');
+  if (!('IntersectionObserver' in window)) {
+    elements.forEach(el => el.classList.add('revealed'));
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('revealed'), i * 60);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  elements.forEach(el => {
+    if (!el.classList.contains('revealed')) {
+      el.classList.add('reveal-on-scroll');
+      observer.observe(el);
+    }
+  });
 }
 
 document.querySelectorAll("[data-route]").forEach((element) => {
