@@ -1708,12 +1708,19 @@ function renderAdminProfile() {
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.93.55 3.73 1.5 5.23L2 22l4.82-1.48A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.63 0-3.17-.39-4.54-1.07l-.33-.16-3.37 1.04.9-3.23-.18-.34A7.95 7.95 0 014 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
           <h3>WhatsApp Bot Pairing</h3>
         </div>
-        <p class="section-desc" style="margin-bottom:1rem;">Masukkan nomor WhatsApp (diawali 62) untuk mendapatkan kode pairing bot. Pastikan bot Node.js sudah berjalan di terminal Anda.</p>
-        <div class="form-row" style="display: flex; gap: 15px; align-items: stretch;">
-          <input type="text" id="waBotNumberInput" placeholder="Contoh: 62812345678" style="padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); flex: 1; outline: none; font-size: 0.95rem;" />
+        <p class="section-desc" style="margin-bottom:1rem;">Masukkan nomor WhatsApp (diawali 62) untuk bot. Pastikan bot Node.js sudah berjalan di terminal VPS Anda.</p>
+        
+        <div class="form-row" style="display: flex; gap: 15px; align-items: stretch; margin-bottom: 1rem;">
+          <input type="text" id="waBotNumberInput" placeholder="Contoh: 62812345678" style="padding: 0.75rem 1rem; border: 1px solid #ccc; background: #fafafa; border-radius: 8px; flex: 1; outline: none; font-size: 0.95rem; color: #333;" value="${escapeHtml(profile.botNumber || '')}" />
           <button type="button" id="btnRequestPairing" class="btn-solid-pink" style="white-space: nowrap; margin-top: 0; padding: 0 1.5rem;">Dapatkan Kode</button>
         </div>
-        <div id="waBotPairingCode" style="margin-top: 15px; font-weight: bold; font-size: 1.5rem; color: var(--primary-color); letter-spacing: 2px;"></div>
+        
+        <div id="waBotPairingCode" style="margin-top: 5px; margin-bottom: 15px; font-weight: bold; font-size: 1.5rem; color: var(--primary-color); letter-spacing: 2px; text-align: center;"></div>
+        
+        <div style="background: #1e1e1e; color: #0f0; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; height: 120px; overflow-y: auto;" id="waBotLogs">
+          <div style="color: #888;">[Sistem] Menunggu koneksi bot...</div>
+          ${profile.botNumber ? `<div>[Sistem] Nomor bot terakhir: ${escapeHtml(profile.botNumber)}</div>` : ''}
+        </div>
       </div>
     </div>
 
@@ -2505,25 +2512,50 @@ function initWABotAdminEvents() {
       if (!db) return alert("Database Firebase belum terhubung!");
 
       const display = document.querySelector("#waBotPairingCode");
-      display.textContent = "Meminta kode ke bot...";
+      const logs = document.querySelector("#waBotLogs");
+      
+      const addLog = (msg) => {
+        if(logs) {
+          logs.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${escapeHtml(msg)}</div>`;
+          logs.scrollTop = logs.scrollHeight;
+        }
+      };
+
+      display.textContent = "Meminta kode...";
+      addLog(`Meminta pairing untuk nomor: ${phone}`);
+      
+      // Save bot number to profile
+      const profile = getStoreProfile();
+      profile.botNumber = phone;
+      writeStorage("sakuraMaharStoreProfile", profile);
       
       db.collection("settings").doc("wa-bot").set({
         phone: phone,
         status: "requesting",
-        code: null
+        code: null,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).then(() => {
+        addLog("Data terkirim ke Firebase. Menunggu respons bot Node.js...");
+        
         const unsub = db.collection("settings").doc("wa-bot").onSnapshot(doc => {
           const data = doc.data();
           if (data && data.code) {
             display.textContent = "Kode: " + data.code;
+            addLog(`Berhasil mendapat kode: ${data.code}`);
             unsub();
           } else if (data && data.status === "error") {
             display.textContent = "Error: " + data.error;
+            addLog(`Error dari bot: ${data.error}`);
+            unsub();
+          } else if (data && data.status === "connected") {
+            display.textContent = "Terhubung!";
+            addLog("Status: Bot berhasil terhubung ke WhatsApp!");
             unsub();
           }
         });
       }).catch(err => {
-        display.textContent = "Error Firestore: " + err.message;
+        display.textContent = "Error Firestore";
+        addLog(`Error: ${err.message}`);
       });
     });
   }
