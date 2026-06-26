@@ -756,8 +756,8 @@ function productCard(product) {
   const safeSubtitle = escapeHtml(truncateText(product.subtitle || product.description, 58));
   return `
     <article class="product-card">
-      <button class="product-image plain-button" type="button" data-product="${escapeHtml(product.id)}" aria-label="Lihat ${safeName}">
-        <img src="${escapeHtml(product.image)}" alt="${safeName}" />
+      <button class="product-image plain-button auto-slide" type="button" data-images="${escapeHtml(JSON.stringify(product.images || [product.image]))}" data-slide-index="0" data-product="${escapeHtml(product.id)}" aria-label="Lihat ${safeName}">
+        <img src="${escapeHtml((product.images && product.images[0]) || product.image)}" alt="${safeName}" style="transition: opacity 0.4s ease-in-out;" />
         <span class="product-badge">${escapeHtml(product.badge)}</span>
       </button>
       <div>
@@ -2270,6 +2270,36 @@ function render() {
   updateAccountChip();
   renderFooterSocials();
   initScrollReveal();
+  initAutoSlide();
+}
+
+let autoSlideInterval = null;
+function initAutoSlide() {
+  if (autoSlideInterval) clearInterval(autoSlideInterval);
+  autoSlideInterval = setInterval(() => {
+    document.querySelectorAll('.auto-slide').forEach(btn => {
+      try {
+        const imagesRaw = btn.getAttribute('data-images');
+        if (!imagesRaw) return;
+        const images = JSON.parse(imagesRaw);
+        if (images.length > 1) {
+          let index = parseInt(btn.getAttribute('data-slide-index') || '0');
+          index = (index + 1) % images.length;
+          btn.setAttribute('data-slide-index', index);
+          const img = btn.querySelector('img');
+          if (img) {
+            img.style.opacity = '0';
+            setTimeout(() => {
+              img.src = images[index];
+              img.style.opacity = '1';
+            }, 400); // Wait for fade out (matches CSS transition duration)
+          }
+        }
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+    });
+  }, 4000); // Change image every 4 seconds
 }
 
 function renderFooterSocials() {
