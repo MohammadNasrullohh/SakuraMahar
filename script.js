@@ -309,7 +309,8 @@ function getStoreProfile() {
     qrisImage: "",
     instagramUrl: "https://www.instagram.com/",
     shopeeUrl: "https://shopee.co.id/",
-    mapsUrl: "https://maps.google.com/"
+    mapsUrl: "https://maps.google.com/",
+    botNumber: ""
   };
   const profile = readStorage("sakuraMaharStoreProfile", defaultProfile);
   if (typeof profile.hours === "string") {
@@ -1707,6 +1708,12 @@ function renderAdminProfile() {
         <div class="qris-header" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.93.55 3.73 1.5 5.23L2 22l4.82-1.48A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.63 0-3.17-.39-4.54-1.07l-.33-.16-3.37 1.04.9-3.23-.18-.34A7.95 7.95 0 014 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/></svg>
           <h3>WhatsApp Bot Pairing</h3>
+          <div style="margin-left: auto; display:flex; align-items:center; gap: 6px; background: ${profile.botNumber ? '#e8f5e9' : '#f5f5f5'}; padding: 4px 10px; border-radius: 20px; border: 1px solid ${profile.botNumber ? '#c8e6c9' : '#e0e0e0'};">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background: ${profile.botNumber ? '#4CAF50' : '#9e9e9e'};"></span>
+            <span style="font-size: 0.8rem; color: ${profile.botNumber ? '#2e7d32' : '#616161'}; font-weight: 600;">
+              ${profile.botNumber ? `Tersambung: ${escapeHtml(profile.botNumber)}` : 'Belum Tersambung'}
+            </span>
+          </div>
         </div>
         <p class="section-desc" style="margin-bottom:1rem;">Masukkan nomor WhatsApp (diawali 62) untuk bot. Pastikan bot Node.js sudah berjalan di terminal VPS Anda.</p>
         
