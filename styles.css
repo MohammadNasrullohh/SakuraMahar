@@ -3925,11 +3925,9 @@ body.admin-open .site-footer {
 .admin-order-card,
 .admin-message-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  min-height: 130px;
-  padding: 22px 28px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 24px;
   background: #fff;
   border-radius: 14px;
 }
@@ -4797,27 +4795,57 @@ button:active {
 .odm-total strong { color: var(--maroon); font-size: 17px; }
 
 /* ── Improved Admin Order Card ─────────── */
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
 .card-header-left {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+.card-header-left strong {
+  font-size: 15px;
+  color: #151113;
 }
 .order-id-label {
   font-size: 11px;
   color: #aaa;
   font-family: monospace;
+  letter-spacing: 0.3px;
 }
 .order-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  margin: 8px 0 4px;
+  gap: 8px 18px;
+  padding: 10px 0;
+  border-top: 1px solid #f3eced;
+  border-bottom: 1px solid #f3eced;
 }
 .meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   color: #555;
 }
+.meta-item svg {
+  flex-shrink: 0;
+  color: var(--maroon);
+  opacity: 0.65;
+}
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 button.detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: none;
   border: none;
   padding: 0;
@@ -4825,14 +4853,32 @@ button.detail-link {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
-button.detail-link:hover { opacity: 0.75; }
+button.detail-link:hover { opacity: 0.65; }
+button.detail-link svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .unpaid-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
 }
+.price-val {
+  color: var(--maroon);
+  font-size: 16px;
+  white-space: nowrap;
+}
+.price-only {
+  color: var(--maroon);
+  font-size: 16px;
+}
+
 
