@@ -2556,18 +2556,17 @@ section[aria-labelledby="recommend-title"] .section-heading h2 {
 }
 
 .catalog-page .catalog-top {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: min(100% - 56px, 920px);
   margin: 0 auto 30px;
   padding: 0;
 }
 
 .catalog-page .catalog-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
   gap: 34px;
-  justify-content: stretch;
-  width: 100%;
   background: transparent;
 }
 
