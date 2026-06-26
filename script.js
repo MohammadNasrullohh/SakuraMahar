@@ -196,13 +196,17 @@ function normalizeProduct(product) {
   const category = String(product.category || product.model || "Model Bingkai Mahar").trim();
   const price = Number(product.price);
   const stock = Number(product.stock);
+  const images = Array.isArray(product.images) && product.images.length > 0 
+    ? product.images 
+    : (product.image ? [String(product.image)] : ["assets/product-red.png"]);
 
   return {
     id: String(product.id || `${slugify(name)}-${Date.now()}`).trim(),
     name,
     subtitle: String(product.subtitle || product.description || "Mahar handmade dengan desain elegan dan detail rapi.").trim(),
     price: Number.isFinite(price) && price > 0 ? price : 0,
-    image: String(product.image || "assets/product-red.png").trim(),
+    image: images[0],
+    images: images,
     category: category || "Model Bingkai Mahar",
     model: String(product.model || category || "Model Bingkai Mahar").trim(),
     badge: String(product.badge || "Custom").trim(),
@@ -917,8 +921,17 @@ function renderProduct() {
       <div class="shop-flow-inner">
         ${shopBackTitle("")}
         <article class="product-detail-card">
-          <div class="product-detail-image">
-            <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" />
+          <div class="product-detail-gallery">
+            <div class="main-image-container">
+              <img id="mainProductImage" src="${escapeHtml(product.images[0])}" alt="${escapeHtml(product.name)}" />
+            </div>
+            ${product.images.length > 1 ? `
+            <div class="thumbnail-list">
+              ${product.images.map((img, i) => `
+                <img class="thumbnail-img ${i === 0 ? 'active' : ''}" src="${escapeHtml(img)}" onclick="document.getElementById('mainProductImage').src='${escapeHtml(img)}'; document.querySelectorAll('.thumbnail-img').forEach(t=>t.classList.remove('active')); this.classList.add('active');" />
+              `).join("")}
+            </div>
+            ` : ""}
           </div>
           <div class="product-detail-info">
             <h1>${escapeHtml(product.name)}</h1>
@@ -1466,18 +1479,17 @@ function renderAdminProductForm() {
     </div>
     <form class="admin-product-form new-form" id="adminProductForm" data-edit-id="${isEdit ? escapeHtml(product.id) : ""}">
       <div class="admin-upload-row new-upload-row">
-        <label class="admin-upload-box new-upload-box" style="position: relative;">
-          <input name="image" type="file" accept="image/*" hidden onchange="window.handleImagePreview(event)" />
-          <svg viewBox="0 0 24 24" aria-hidden="true" style="position: relative; z-index: 2;"><path d="M11 16V7.8L8.2 10.6 6.8 9.2 12 4l5.2 5.2-1.4 1.4L13 7.8V16h-2Zm-5 4v-5h2v3h8v-3h2v5H6Z" /></svg>
-          <span style="position: relative; z-index: 2;">${product?.image ? "Ganti Gambar" : "Unggah Gambar"}</span>
-          <img class="preview-img" src="${product?.image || ''}" style="display: ${product?.image ? 'block' : 'none'}; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; z-index: 1;" />
-        </label>
-        <label class="admin-upload-box new-upload-box" style="position: relative;">
-          <input name="galleryImage" type="file" accept="image/*" hidden onchange="window.handleImagePreview(event)" />
-          <svg viewBox="0 0 24 24" aria-hidden="true" style="position: relative; z-index: 2;"><path d="M11 16V7.8L8.2 10.6 6.8 9.2 12 4l5.2 5.2-1.4 1.4L13 7.8V16h-2Zm-5 4v-5h2v3h8v-3h2v5H6Z" /></svg>
-          <span style="position: relative; z-index: 2;">Unggah Gambar</span>
-          <img class="preview-img" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; z-index: 1;" />
-        </label>
+        ${[0, 1, 2, 3].map(i => {
+           const img = product?.images?.[i] || "";
+           return `
+           <label class="admin-upload-box new-upload-box" style="position: relative;">
+             <input name="image_${i}" type="file" accept="image/*" hidden onchange="window.handleImagePreview(event)" />
+             <svg viewBox="0 0 24 24" aria-hidden="true" style="position: relative; z-index: 2;"><path d="M11 16V7.8L8.2 10.6 6.8 9.2 12 4l5.2 5.2-1.4 1.4L13 7.8V16h-2Zm-5 4v-5h2v3h8v-3h2v5H6Z" /></svg>
+             <span style="position: relative; z-index: 2; text-align: center;">${img ? "Ganti<br>Gambar " + (i+1) : "Unggah<br>Gambar " + (i+1)}</span>
+             <img class="preview-img" src="${escapeHtml(img)}" style="display: ${img ? 'block' : 'none'}; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; z-index: 1;" />
+           </label>
+           `;
+        }).join("")}
       </div>
       <label>Nama Produk *<input name="name" required placeholder="Masukan Nama Produk" value="${escapeHtml(product?.name || "")}" /></label>
       <label>Deskripsi Produk *<textarea name="subtitle" required placeholder="Masukan Deskripsi Produk" rows="3">${escapeHtml(product?.subtitle || "")}</textarea></label>
@@ -1753,8 +1765,18 @@ async function handleAdminProductSubmit(event) {
   const price = Number(String(formData.get("price") || "").replace(/[^\d]/g, ""));
   const stock = Number(String(formData.get("stock") || "").replace(/[^\d]/g, ""));
   const pickups = formData.getAll("pickups");
-  const imageFile = form.elements.image?.files?.[0];
-  const image = imageFile ? await fileToDataUrl(imageFile) : existingProduct?.image;
+  
+  const images = [];
+  for (let i = 0; i < 4; i++) {
+    const imageFile = form.elements[`image_${i}`]?.files?.[0];
+    if (imageFile) {
+      images.push(await compressImage(imageFile, 800, 800, 0.7));
+    } else if (existingProduct?.images?.[i]) {
+      images.push(existingProduct.images[i]);
+    } else if (i === 0 && existingProduct?.image) {
+      images.push(existingProduct.image);
+    }
+  }
 
   if (!name || !subtitle || !category || !price) {
     setAdminMessage(form, "Lengkapi data produk dulu.");
@@ -1766,8 +1788,8 @@ async function handleAdminProductSubmit(event) {
     return;
   }
 
-  if (!image) {
-    setAdminMessage(form, "Upload gambar produk dulu.");
+  if (images.length === 0) {
+    setAdminMessage(form, "Upload minimal 1 gambar utama produk.");
     return;
   }
 
@@ -1780,7 +1802,7 @@ async function handleAdminProductSubmit(event) {
     model: category,
     price,
     stock,
-    image,
+    images,
     pickups,
     badge: existingProduct?.badge || "Custom",
     rating: existingProduct?.rating || 4.9,
