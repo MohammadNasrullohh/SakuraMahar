@@ -3459,7 +3459,8 @@ section[aria-labelledby="recommend-title"] .section-heading h2 {
   }
 
   .product-detail-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    padding: 24px 20px !important;
   }
 
   .account-grid {
