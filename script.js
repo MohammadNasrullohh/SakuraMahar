@@ -2510,6 +2510,38 @@ async function handleChatImageUpload(e) {
 }
 
 function initWABotAdminEvents() {
+  if (db) {
+    db.collection("settings").doc("wa-bot").get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        if (data.phone) {
+          const input = document.querySelector("#waBotNumberInput");
+          if (input && !input.value) input.value = data.phone;
+          
+          if (data.status === "connected") {
+            // Find the badge inside qris-header
+            const badgeContainer = document.querySelector(".wa-bot-form-container .qris-header div[style*='margin-left: auto']");
+            if (badgeContainer) {
+              const badgeDot = badgeContainer.children[0];
+              const badgeText = badgeContainer.children[1];
+              badgeText.textContent = `Tersambung: ${data.phone}`;
+              badgeText.style.color = '#2e7d32';
+              badgeDot.style.background = '#4CAF50';
+              badgeContainer.style.background = '#e8f5e9';
+              badgeContainer.style.border = '1px solid #c8e6c9';
+              
+              const profile = getStoreProfile();
+              if (profile.botNumber !== data.phone) {
+                profile.botNumber = data.phone;
+                writeStorage("sakuraMaharStoreProfile", profile);
+              }
+            }
+          }
+        }
+      }
+    }).catch(err => console.error("Error fetching bot status:", err));
+  }
+
   const btnRequestPairing = document.querySelector("#btnRequestPairing");
   if (btnRequestPairing) {
     btnRequestPairing.addEventListener("click", () => {
