@@ -21,11 +21,25 @@ try {
 
 function initFirebaseListeners() {
   if (!db) return;
-  db.collection("store").doc("products").onSnapshot((doc) => {
-    if (doc.exists) {
-      products = doc.data().items || [];
+  // Listen to products collection (each product its own doc)
+  db.collection("products").onSnapshot((snapshot) => {
+    if (!snapshot.empty) {
+      products = snapshot.docs.map(d => d.data()).filter(Boolean);
+      products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       writeStorage("sakuraMaharProducts", products);
       render();
+    }
+  });
+
+  // Also listen to legacy store/products doc for backward compat
+  db.collection("store").doc("products").onSnapshot((doc) => {
+    if (doc.exists && products.length === 0) {
+      const legacyProducts = doc.data().items || [];
+      if (legacyProducts.length > 0) {
+        products = legacyProducts.map(normalizeProduct).filter(Boolean);
+        writeStorage("sakuraMaharProducts", products);
+        render();
+      }
     }
   });
 
@@ -240,7 +254,12 @@ function initializeProducts() {
 function saveProducts() {
   writeStorage("sakuraMaharProducts", products);
   if (db) {
-    db.collection("store").doc("products").set({ items: products }, { merge: true });
+    // Save each product as its own document to avoid 1MB Firestore limit
+    const batch = db.batch();
+    products.forEach(p => {
+      batch.set(db.collection("products").doc(p.id), p, { merge: true });
+    });
+    batch.commit().catch(err => console.error("Error saving products:", err));
   }
 }
 
@@ -1544,25 +1563,29 @@ function renderAdminOrders() {
                 return `
                   <article class="admin-order-card new-card">
                     <div class="card-header">
-                      <strong>${escapeHtml(order.customerName)}</strong>
+                      <div class="card-header-left">
+                        <strong>${escapeHtml(order.customerName)}</strong>
+                        <span class="order-id-label">${escapeHtml(order.id)}</span>
+                      </div>
                       <span class="status-badge ${badgeClass}">${badgeText}</span>
                     </div>
-                    <p class="product-name">${escapeHtml(order.productName)}</p>
-                    
+                    <div class="order-meta">
+                      <span class="meta-item">📦 ${escapeHtml(order.productName)}</span>
+                      <span class="meta-item">📍 ${escapeHtml(order.pickupMethod || 'COD')}</span>
+                      ${order.phone ? `<span class="meta-item">📱 ${escapeHtml(order.phone)}</span>` : ''}
+                    </div>
                     <div class="card-footer">
-                      <a href="#order" class="detail-link">Rincian Pesanan</a>
+                      <button type="button" class="detail-link" data-detail-order="${escapeHtml(order.id)}">📋 Rincian Pesanan</button>
                       <div class="card-actions">
                         ${isUnpaid ? `
-                          <div class="unpaid-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                          <div class="unpaid-actions">
                             <strong class="price-val">${formatPrice(order.total)}</strong>
-                            <div class="button-group-vertical">
-                              <button type="button" class="btn-solid-pink" data-order-status="${escapeHtml(order.id)}" data-status="Diproses">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                                Konfirmasi & Proses
-                              </button>
-                            </div>
+                            <button type="button" class="btn-solid-pink" data-order-status="${escapeHtml(order.id)}" data-status="Diproses">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                              Konfirmasi &amp; Proses
+                            </button>
                           </div>` : isProcessing ? `
-                          <div class="button-group-horizontal">
+                          <div class="unpaid-actions">
                             <strong class="price-val">${formatPrice(order.total)}</strong>
                             <button type="button" class="btn-solid-pink" data-order-status="${escapeHtml(order.id)}" data-status="Selesai">
                               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
@@ -2045,6 +2068,48 @@ function bindPageEvents() {
       saveOrders(orders);
       state.adminOrderTab = nextStatus;
       render();
+    });
+  });
+
+  // Order detail modal
+  app.querySelectorAll("[data-detail-order]").forEach((element) => {
+    element.addEventListener("click", () => {
+      const orderId = element.dataset.detailOrder;
+      const order = getOrders().find(o => o.id === orderId);
+      if (!order) return;
+      const existing = document.getElementById("orderDetailModal");
+      if (existing) existing.remove();
+      const modal = document.createElement("div");
+      modal.id = "orderDetailModal";
+      modal.className = "order-detail-modal-overlay";
+      modal.innerHTML = `
+        <div class="order-detail-modal">
+          <div class="odm-header">
+            <h2>Rincian Pesanan</h2>
+            <button class="odm-close" id="odmClose">&times;</button>
+          </div>
+          <div class="odm-body">
+            <div class="odm-row"><span>No. Pesanan</span><strong>${escapeHtml(order.id)}</strong></div>
+            <div class="odm-row"><span>Status</span><strong>${escapeHtml(order.status)}</strong></div>
+            <div class="odm-row"><span>Nama</span><strong>${escapeHtml(order.customerName)}</strong></div>
+            <div class="odm-row"><span>No. HP</span><strong>${escapeHtml(order.phone || "-")}</strong></div>
+            <div class="odm-row"><span>Alamat</span><strong>${escapeHtml(order.address || order.detail?.address || "-")}</strong></div>
+            <div class="odm-divider"></div>
+            <div class="odm-row"><span>Produk</span><strong>${escapeHtml(order.productName)}</strong></div>
+            <div class="odm-row"><span>Jumlah</span><strong>${escapeHtml(String(order.quantity || 1))} pcs</strong></div>
+            <div class="odm-row"><span>Pengambilan</span><strong>${escapeHtml(order.pickupMethod || "-")}</strong></div>
+            ${order.warnaMahar ? `<div class="odm-row"><span>Warna Mahar</span><strong>${escapeHtml(order.warnaMahar)}</strong></div>` : ""}
+            ${order.warnaBackground ? `<div class="odm-row"><span>Warna Background</span><strong>${escapeHtml(order.warnaBackground)}</strong></div>` : ""}
+            ${order.customText ? `<div class="odm-row"><span>Custom Text</span><strong>${escapeHtml(order.customText)}</strong></div>` : ""}
+            <div class="odm-divider"></div>
+            <div class="odm-row odm-total"><span>Total</span><strong>${formatPrice(order.total)}</strong></div>
+            <div class="odm-row"><span>Tanggal Pesan</span><strong>${new Date(order.createdAt).toLocaleDateString("id-ID", {day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"})}</strong></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+      document.getElementById("odmClose").addEventListener("click", () => modal.remove());
     });
   });
 

@@ -4715,3 +4715,124 @@ button:active {
   margin-bottom: 4px;
   display: block;
 }
+
+/* ── Order Detail Modal ───────────────── */
+.order-detail-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.order-detail-modal {
+  background: #fff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.odm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0e8ea;
+}
+.odm-header h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #151113;
+  margin: 0;
+}
+.odm-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+.odm-close:hover { color: var(--maroon); }
+.odm-body {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.odm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+}
+.odm-row span {
+  color: #888;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+.odm-row strong {
+  color: #151113;
+  text-align: right;
+  word-break: break-word;
+}
+.odm-divider {
+  border: none;
+  border-top: 1px dashed #e8d8db;
+  margin: 4px 0;
+}
+.odm-total span { color: #151113; font-weight: 600; }
+.odm-total strong { color: var(--maroon); font-size: 17px; }
+
+/* ── Improved Admin Order Card ─────────── */
+.card-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.order-id-label {
+  font-size: 11px;
+  color: #aaa;
+  font-family: monospace;
+}
+.order-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 8px 0 4px;
+}
+.meta-item {
+  font-size: 13px;
+  color: #555;
+}
+button.detail-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--maroon);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+button.detail-link:hover { opacity: 0.75; }
+.unpaid-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
