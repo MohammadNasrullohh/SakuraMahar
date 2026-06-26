@@ -308,7 +308,7 @@ function getStoreProfile() {
     ],
     qrisImage: "",
     instagramUrl: "https://www.instagram.com/",
-    shopeeUrl: "",
+    shopeeUrl: "https://shopee.co.id/",
     mapsUrl: "https://maps.google.com/"
   };
   const profile = readStorage("sakuraMaharStoreProfile", defaultProfile);
@@ -2263,12 +2263,17 @@ function renderFooterSocials() {
   if (!row) return;
   const profile = getStoreProfile();
   const svgIG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm4.2 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6Zm0 2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Zm5-1.6a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0Z"/></svg>';
-  const svgShopee = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7V6a5 5 0 0 1 10 0v1h2.2l.8 13H4L4.8 7H7Zm2 0h6V6a3 3 0 0 0-6 0v1Z"/></svg>';
+  const svgWA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 8.4 15.4L22 22l-4.8-1.5A10 10 0 1 1 12 2Zm0 2a8 8 0 0 0-6.8 12.2l.3.5-.8 2.5 2.6-.8.5.3A8 8 0 1 0 12 4Zm-3.1 4.1c.3-.3.7-.3 1-.1.2.2.9 1.2 1 1.5.1.3.1.6-.1.9l-.5.6c.5 1 1.3 1.8 2.2 2.4.8.5 1.5.8 1.9.8.2 0 .4 0 .5-.2l.6-.7c.2-.3.6-.3.9-.2.3.1 1.5.7 1.8.9.2.2.3.5.2.8-.2.8-.9 1.7-1.7 1.9-.7.2-2 .1-4.4-1.2-2.9-1.5-4.8-4.2-5-5.7-.1-.9.7-1.7 1.6-1.7Z"/></svg>';
+  const svgShopee = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7V6a5 5 0 0 1 10 0v1h2.2l.8 13H4L4.8 7H7Zm2 0h6V6a3 3 0 0 0-6 0v1Zm3 4c-1 0-1.6.5-1.6 1.1 0 .5.4.8 1.4 1.1 1.8.5 2.9 1.3 2.9 2.8 0 1.4-1 2.5-2.7 2.8V20h-1.6v-1.2a5.4 5.4 0 0 1-2.5-1l.8-1.6c.8.5 1.6.8 2.4.8 1 0 1.5-.4 1.5-1 0-.6-.5-.9-1.6-1.2-1.8-.5-2.7-1.3-2.7-2.7 0-1.3.9-2.4 2.6-2.7V8h1.6v1.3c.9.1 1.7.4 2.2.8l-.8 1.6a4 4 0 0 0-1.9-.7Z"/></svg>';
   const svgMaps = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5.2-7 13-7 13S5 14.2 5 9a7 7 0 0 1 7-7Zm0 2a5 5 0 0 0-5 5c0 2.9 3.1 7.5 5 10 1.9-2.5 5-7.1 5-10a5 5 0 0 0-5-5Zm0 2.7A2.3 2.3 0 1 1 12 11.3a2.3 2.3 0 0 1 0-4.6Z"/></svg>';
   let html = '';
-  if (profile.instagramUrl) html += `<a href="${escapeHtml(profile.instagramUrl)}" aria-label="Instagram" target="_blank" rel="noreferrer">${svgIG}</a>`;
-  if (profile.shopeeUrl) html += `<a href="${escapeHtml(profile.shopeeUrl)}" aria-label="Shopee" target="_blank" rel="noreferrer">${svgShopee}</a>`;
-  if (profile.mapsUrl) html += `<a href="${escapeHtml(profile.mapsUrl)}" aria-label="Lokasi" target="_blank" rel="noreferrer">${svgMaps}</a>`;
+  if (profile.instagramUrl) html += `<a href="${escapeHtml(profile.instagramUrl)}" aria-label="Instagram" target="_blank" rel="noreferrer" class="social-icon">${svgIG}</a>`;
+  if (profile.phone) {
+    const waNum = profile.phone.replace(/[^0-9]/g, '');
+    html += `<a href="https://wa.me/${waNum}" aria-label="WhatsApp" target="_blank" rel="noreferrer" class="social-icon">${svgWA}</a>`;
+  }
+  if (profile.shopeeUrl) html += `<a href="${escapeHtml(profile.shopeeUrl)}" aria-label="Shopee" target="_blank" rel="noreferrer" class="social-icon">${svgShopee}</a>`;
+  if (profile.mapsUrl) html += `<a href="${escapeHtml(profile.mapsUrl)}" aria-label="Lokasi" target="_blank" rel="noreferrer" class="social-icon">${svgMaps}</a>`;
   row.innerHTML = html;
 }
 
