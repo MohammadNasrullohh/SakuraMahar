@@ -5,3 +5,4 @@ wa-bot/.env*
 wa-bot/service-account.json
 .wwebjs_auth/
 wa-bot/.wwebjs_auth/
+node_modules/
