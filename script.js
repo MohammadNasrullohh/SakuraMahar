@@ -191,7 +191,13 @@ function readStorage(key, fallback) {
 }
 
 function writeStorage(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    console.error("Storage error:", e);
+    return false;
+  }
 }
 
 function slugify(value) {
@@ -252,7 +258,10 @@ function initializeProducts() {
 }
 
 function saveProducts() {
-  writeStorage("sakuraMaharProducts", products);
+  const success = writeStorage("sakuraMaharProducts", products);
+  if (!success) {
+    throw new Error("QUOTA_EXCEEDED");
+  }
   if (db) {
     // Save each product as its own document to avoid 1MB Firestore limit
     const batch = db.batch();
@@ -1818,7 +1827,7 @@ async function handleAdminProductSubmit(event) {
   for (let i = 0; i < 4; i++) {
     const imageFile = form.elements[`image_${i}`]?.files?.[0];
     if (imageFile) {
-      images.push(await compressImage(imageFile, 800, 800, 0.7));
+      images.push(await compressImage(imageFile, 500, 500, 0.5));
     } else if (existingProduct?.images?.[i]) {
       images.push(existingProduct.images[i]);
     } else if (i === 0 && existingProduct?.image) {
@@ -1862,10 +1871,21 @@ async function handleAdminProductSubmit(event) {
     return;
   }
 
+  const originalProducts = [...products];
   products = existingProduct
     ? products.map((item) => (item.id === existingProduct.id ? product : item))
     : [product, ...products];
-  saveProducts();
+    
+  try {
+    saveProducts();
+  } catch (e) {
+    if (e.message === "QUOTA_EXCEEDED") {
+      products = originalProducts;
+      setAdminMessage(form, "Gagal menyimpan: Ukuran gambar terlalu besar atau memori penuh.");
+      return;
+    }
+    console.error(e);
+  }
   state.selectedProductId = product.id;
   state.adminCategory = "Semua Produk";
   state.adminView = "list";
