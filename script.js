@@ -1813,6 +1813,14 @@ function setAdminMessage(form, message, type = "error") {
 async function handleAdminProductSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
+  
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn ? submitBtn.innerHTML : "Simpan Produk";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Memproses...";
+  }
+  
   const formData = new FormData(form);
   const editId = form.dataset.editId;
   const existingProduct = editId ? products.find((product) => product.id === editId) : null;
@@ -1822,6 +1830,13 @@ async function handleAdminProductSubmit(event) {
   const price = Number(String(formData.get("price") || "").replace(/[^\d]/g, ""));
   const stock = Number(String(formData.get("stock") || "").replace(/[^\d]/g, ""));
   const pickups = formData.getAll("pickups");
+  
+  const resetBtn = () => {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
+    }
+  };
   
   const images = [];
   try {
@@ -1838,21 +1853,25 @@ async function handleAdminProductSubmit(event) {
   } catch (err) {
     setAdminMessage(form, "Gagal memproses gambar. Pastikan gambar formatnya valid.");
     console.error("Image processing error:", err);
+    resetBtn();
     return;
   }
 
   if (!name || !subtitle || !category || !price) {
     setAdminMessage(form, "Lengkapi data produk dulu.");
+    resetBtn();
     return;
   }
 
   if (!pickups.length) {
     setAdminMessage(form, "Pilih minimal satu metode pengambilan.");
+    resetBtn();
     return;
   }
 
   if (images.length === 0) {
     setAdminMessage(form, "Upload minimal 1 gambar utama produk.");
+    resetBtn();
     return;
   }
 
@@ -1874,6 +1893,7 @@ async function handleAdminProductSubmit(event) {
 
   if (!product) {
     setAdminMessage(form, "Produk belum valid.");
+    resetBtn();
     return;
   }
 
@@ -1888,10 +1908,13 @@ async function handleAdminProductSubmit(event) {
     if (e.message === "QUOTA_EXCEEDED") {
       products = originalProducts;
       setAdminMessage(form, "Gagal menyimpan: Ukuran gambar terlalu besar atau memori penuh.");
+      resetBtn();
       return;
     }
     console.error(e);
   }
+  
+  // success - no need to reset button since form will be unmounted
   state.selectedProductId = product.id;
   state.adminCategory = "Semua Produk";
   state.adminView = "list";
