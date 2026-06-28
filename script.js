@@ -259,9 +259,7 @@ function initializeProducts() {
 
 function saveProducts() {
   const success = writeStorage("sakuraMaharProducts", products);
-  if (!success) {
-    throw new Error("QUOTA_EXCEEDED");
-  }
+  
   if (db) {
     // Save each product as its own document to avoid 1MB Firestore limit
     const batch = db.batch();
@@ -269,6 +267,9 @@ function saveProducts() {
       batch.set(db.collection("products").doc(p.id), p, { merge: true });
     });
     batch.commit().catch(err => console.error("Error saving products:", err));
+  } else if (!success) {
+    // Only throw if we have no database fallback
+    throw new Error("QUOTA_EXCEEDED");
   }
 }
 
