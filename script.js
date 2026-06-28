@@ -1824,15 +1824,21 @@ async function handleAdminProductSubmit(event) {
   const pickups = formData.getAll("pickups");
   
   const images = [];
-  for (let i = 0; i < 4; i++) {
-    const imageFile = form.elements[`image_${i}`]?.files?.[0];
-    if (imageFile) {
-      images.push(await compressImage(imageFile, 500, 500, 0.5));
-    } else if (existingProduct?.images?.[i]) {
-      images.push(existingProduct.images[i]);
-    } else if (i === 0 && existingProduct?.image) {
-      images.push(existingProduct.image);
+  try {
+    for (let i = 0; i < 4; i++) {
+      const imageFile = form.elements[`image_${i}`]?.files?.[0];
+      if (imageFile) {
+        images.push(await compressImage(imageFile, 500, 500, 0.5));
+      } else if (existingProduct?.images?.[i]) {
+        images.push(existingProduct.images[i]);
+      } else if (i === 0 && existingProduct?.image) {
+        images.push(existingProduct.image);
+      }
     }
+  } catch (err) {
+    setAdminMessage(form, "Gagal memproses gambar. Pastikan gambar formatnya valid.");
+    console.error("Image processing error:", err);
+    return;
   }
 
   if (!name || !subtitle || !category || !price) {
