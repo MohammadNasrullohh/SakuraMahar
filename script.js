@@ -24,10 +24,7 @@ function initFirebaseListeners() {
   // Listen to products collection (each product its own doc)
   db.collection("products").onSnapshot((snapshot) => {
     if (!snapshot.empty) {
-      const firestoreProducts = snapshot.docs.map(d => d.data()).filter(Boolean);
-      const firestoreIds = new Set(firestoreProducts.map(p => p.id));
-      const missingDefaults = defaultProducts.filter(p => !firestoreIds.has(p.id));
-      products = [...firestoreProducts, ...missingDefaults];
+      products = snapshot.docs.map(d => d.data()).filter(Boolean);
       products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       writeStorage("sakuraMaharProducts", products);
       render();
@@ -2130,6 +2127,11 @@ function bindPageEvents() {
       state.cart = state.cart.filter((item) => item.productId !== productId);
       if (state.selectedProductId === productId) state.selectedProductId = products[0]?.id || null;
       saveProducts();
+      
+      if (db) {
+        db.collection("products").doc(productId).delete().catch(err => console.error("Error deleting product:", err));
+      }
+      
       updateCartCount();
       render();
     });
