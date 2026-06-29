@@ -2326,6 +2326,7 @@ function render() {
   renderFooterSocials();
   initScrollReveal();
   initAutoSlide();
+  initShowcaseAutoSlide();
 }
 
 let autoSlideInterval = null;
@@ -2354,7 +2355,26 @@ function initAutoSlide() {
         // ignore JSON parse errors
       }
     });
-  }, 4000); // Change image every 4 seconds
+  }, 3000);
+}
+
+let showcaseSlideInterval = null;
+function initShowcaseAutoSlide() {
+  if (showcaseSlideInterval) clearInterval(showcaseSlideInterval);
+  if (state.route !== "home") return;
+  
+  const total = getShowcaseItems().length;
+  if (total <= 1) return;
+  
+  showcaseSlideInterval = setInterval(() => {
+    if (state.carouselDirection !== 0) return;
+    state.carouselDirection = 1;
+    state.featuredIndex = (state.featuredIndex + 1) % total;
+    render();
+    window.setTimeout(() => {
+      state.carouselDirection = 0;
+    }, 420);
+  }, 4000);
 }
 
 function renderFooterSocials() {
