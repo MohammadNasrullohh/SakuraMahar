@@ -244,19 +244,17 @@ function initializeProducts() {
   const version = readStorage("sakuraMaharProductStoreVersion", "");
   if (version !== PRODUCT_STORE_VERSION) {
     writeStorage("sakuraMaharProductStoreVersion", PRODUCT_STORE_VERSION);
-    writeStorage("sakuraMaharProducts", defaultProducts);
-    return [...defaultProducts].map(normalizeProduct).filter(Boolean);
+    writeStorage("sakuraMaharProducts", []);
+    return [];
   }
 
   const storedProducts = readStorage("sakuraMaharProducts", null);
   if (Array.isArray(storedProducts)) {
-    const storedIds = new Set(storedProducts.map(p => p.id));
-    const missingDefaults = defaultProducts.filter(p => !storedIds.has(p.id));
-    return [...storedProducts, ...missingDefaults].map(normalizeProduct).filter(Boolean);
+    return storedProducts.map(normalizeProduct).filter(Boolean);
   }
 
-  writeStorage("sakuraMaharProducts", defaultProducts);
-  return [...defaultProducts].map(normalizeProduct).filter(Boolean);
+  writeStorage("sakuraMaharProducts", []);
+  return [];
 }
 
 function saveProducts() {
