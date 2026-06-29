@@ -567,7 +567,7 @@ function addToCart(productId, quantity = 1) {
   if (existing) {
     existing.quantity += quantity;
   } else {
-    state.cart.push({ productId, quantity });
+    state.cart = [{ productId, quantity }];
   }
   updateCartCount();
 }
