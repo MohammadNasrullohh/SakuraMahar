@@ -24,7 +24,10 @@ function initFirebaseListeners() {
   // Listen to products collection (each product its own doc)
   db.collection("products").onSnapshot((snapshot) => {
     if (!snapshot.empty) {
-      products = snapshot.docs.map(d => d.data()).filter(Boolean);
+      const firestoreProducts = snapshot.docs.map(d => d.data()).filter(Boolean);
+      const firestoreIds = new Set(firestoreProducts.map(p => p.id));
+      const missingDefaults = defaultProducts.filter(p => !firestoreIds.has(p.id));
+      products = [...firestoreProducts, ...missingDefaults];
       products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       writeStorage("sakuraMaharProducts", products);
       render();
@@ -244,17 +247,19 @@ function initializeProducts() {
   const version = readStorage("sakuraMaharProductStoreVersion", "");
   if (version !== PRODUCT_STORE_VERSION) {
     writeStorage("sakuraMaharProductStoreVersion", PRODUCT_STORE_VERSION);
-    writeStorage("sakuraMaharProducts", []);
-    return [];
+    writeStorage("sakuraMaharProducts", defaultProducts);
+    return [...defaultProducts].map(normalizeProduct).filter(Boolean);
   }
 
   const storedProducts = readStorage("sakuraMaharProducts", null);
   if (Array.isArray(storedProducts)) {
-    return storedProducts.map(normalizeProduct).filter(Boolean);
+    const storedIds = new Set(storedProducts.map(p => p.id));
+    const missingDefaults = defaultProducts.filter(p => !storedIds.has(p.id));
+    return [...storedProducts, ...missingDefaults].map(normalizeProduct).filter(Boolean);
   }
 
-  writeStorage("sakuraMaharProducts", []);
-  return [];
+  writeStorage("sakuraMaharProducts", defaultProducts);
+  return [...defaultProducts].map(normalizeProduct).filter(Boolean);
 }
 
 function saveProducts() {
