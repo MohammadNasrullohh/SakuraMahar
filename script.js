@@ -257,18 +257,20 @@ function initializeProducts() {
   return [];
 }
 
-function saveProducts() {
+async function saveProducts(specificProductId = null) {
   const success = writeStorage("sakuraMaharProducts", products);
   
   if (db) {
-    // Save each product as its own document to avoid 1MB Firestore limit
-    const batch = db.batch();
-    products.forEach(p => {
-      batch.set(db.collection("products").doc(p.id), p, { merge: true });
-    });
-    batch.commit().catch(err => console.error("Error saving products:", err));
+    if (specificProductId) {
+      const p = products.find(prod => prod.id === specificProductId);
+      if (p) await db.collection("products").doc(p.id).set(p, { merge: true });
+    } else {
+      const promises = products.map(p => 
+        db.collection("products").doc(p.id).set(p, { merge: true })
+      );
+      await Promise.all(promises);
+    }
   } else if (!success) {
-    // Only throw if we have no database fallback
     throw new Error("QUOTA_EXCEEDED");
   }
 }
@@ -1904,15 +1906,17 @@ async function handleAdminProductSubmit(event) {
     : [product, ...products];
     
   try {
-    saveProducts();
+    await saveProducts(product.id);
   } catch (e) {
-    if (e.message === "QUOTA_EXCEEDED") {
-      products = originalProducts;
-      setAdminMessage(form, "Gagal menyimpan: Ukuran gambar terlalu besar atau memori penuh.");
-      resetBtn();
-      return;
-    }
+    products = originalProducts;
     console.error(e);
+    if (e.message === "QUOTA_EXCEEDED") {
+      setAdminMessage(form, "Gagal menyimpan: Ukuran gambar terlalu besar atau memori penuh.");
+    } else {
+      setAdminMessage(form, "Gagal menyimpan ke server: " + e.message);
+    }
+    resetBtn();
+    return;
   }
   
   // success - no need to reset button since form will be unmounted
@@ -2119,15 +2123,25 @@ function bindPageEvents() {
   });
 
   app.querySelectorAll("[data-delete-product]").forEach((element) => {
-    element.addEventListener("click", () => {
+    element.addEventListener("click", async () => {
       const productId = element.dataset.deleteProduct;
+      const originalProducts = [...products];
+      
       products = products.filter((product) => product.id !== productId);
       state.cart = state.cart.filter((item) => item.productId !== productId);
       if (state.selectedProductId === productId) state.selectedProductId = products[0]?.id || null;
-      saveProducts();
       
-      if (db) {
-        db.collection("products").doc(productId).delete().catch(err => console.error("Error deleting product:", err));
+      try {
+        await saveProducts();
+        if (db) {
+          await db.collection("products").doc(productId).delete();
+        }
+      } catch (err) {
+        products = originalProducts;
+        alert("Gagal menghapus produk: " + err.message);
+        console.error("Error deleting product:", err);
+        render();
+        return;
       }
       
       updateCartCount();
